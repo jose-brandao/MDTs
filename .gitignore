@@ -34,4 +34,5 @@
 agreggationCounterAtomic
 agreggationCounterAtomicHybrid
 syncCounter
-/output/*
+.txt
+.vscode/

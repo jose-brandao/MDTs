@@ -8,7 +8,7 @@
 
 #define LOOP 100000000
 #define TARGET 50000000
-#define BENCH_RUNS 3
+#define BENCH_RUNS 5
 
 using namespace std;
 
@@ -89,7 +89,9 @@ void benchmark(){
       } 
       double finalThroughs = sumTroughs/throughs.size();
 
-      cout << (int)finalThroughs << "," << ((finalCounter-TARGET)*100)/TARGET << "," << NTHREADS[k] << endl;
+      //double overshoot = ((finalCounter-TARGET)*100)/TARGET;
+
+      cout << (int)finalThroughs << "," << NTHREADS[k] << endl;
     }
 }
 
