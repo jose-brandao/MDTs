@@ -1,5 +1,5 @@
-# Mergeable Data Types(MDTs)
-MDTs c++ implementation
+# Mergeable Data Types(MDTs) for shared memory
+MDTs for shared memory c++ implementation
 
 # Setup:
 

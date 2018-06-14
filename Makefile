@@ -11,6 +11,18 @@ benchAll: benchExperiments benchPCounters
 clean: cleanExperiments cleanPCounters
 
 #Experiments####################################################
+poc1MIncs:
+	$(CC) $(BOOST) src/experiments/poc/poc1MIncs.cc -o poc1MIncs $(BOOSTP)
+
+benchPoc1MIncs:
+	./poc1MIncs ${THREADS} > output/experiments/poc1MIncs.txt
+
+poc24Threads:
+	$(CC) $(BOOST) src/experiments/poc/poc24Threads.cc -o poc24Threads $(BOOSTP)
+
+benchPoc24Threads:
+	./poc24Threads ${THREADS} > output/experiments/poc24Threads.txt
+
 manualThreadLocal:
 	$(CC) $(FLAGS) src/experiments/threadLocal/manualThreadLocal.cc -o manualThreadLocal
 

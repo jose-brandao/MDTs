@@ -1,0 +1,50 @@
+***************** NO SYNC *********************
+THREADS NO: 1
+Time: 0.000107
+
+THREADS NO: 2
+Time: 0.000080
+
+THREADS NO: 3
+Time: 0.000095
+
+THREADS NO: 4
+Time: 0.000097
+
+THREADS NO: 5
+Time: 0.000138
+
+THREADS NO: 6
+Time: 0.000151
+
+THREADS NO: 7
+Time: 0.000162
+
+THREADS NO: 8
+Time: 0.000177
+
+***************** THREAD LOCAL *********************
+THREADS NO: 1
+Time: 0.000046
+
+THREADS NO: 2
+Time: 0.000066
+
+THREADS NO: 3
+Time: 0.000073
+
+THREADS NO: 4
+Time: 0.000092
+
+THREADS NO: 5
+Time: 0.000101
+
+THREADS NO: 6
+Time: 0.000115
+
+THREADS NO: 7
+Time: 0.000121
+
+THREADS NO: 8
+Time: 0.000138
+
