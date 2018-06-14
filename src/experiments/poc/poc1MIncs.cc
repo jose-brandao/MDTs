@@ -37,12 +37,11 @@ void atomicInc(){
 
 void threadLocalInc(){
   t.reset(new unsigned int(0)); //init thread local var
-  unsigned int* p = t.get(); //get a pointer to thread local var
   for (int i=0; i < LOOP; i++){
-    ++*p;
+    *t+=1;
   }
   m.lock();
-  c=c + *p;
+  c=c + *t;
   m.unlock();
 }
 

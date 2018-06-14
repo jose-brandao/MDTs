@@ -21,7 +21,7 @@ poc24Threads:
 	$(CC) $(BOOST) src/experiments/poc/poc24Threads.cc -o poc24Threads $(BOOSTP)
 
 benchPoc24Threads:
-	./poc24Threads ${THREADS} > output/experiments/poc24Threads.txt
+	./poc24Threads > output/experiments/poc24Threads.txt
 
 manualThreadLocal:
 	$(CC) $(FLAGS) src/experiments/threadLocal/manualThreadLocal.cc -o manualThreadLocal
