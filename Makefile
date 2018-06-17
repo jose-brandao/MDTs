@@ -10,24 +10,35 @@ benchAll: benchExperiments benchPCounters
 
 clean: cleanExperiments cleanPCounters
 
-#Experiments####################################################
+#POC####################################################
 poc1MIncs:
 	$(CC) $(BOOST) src/experiments/poc/poc1MIncs.cc -o poc1MIncs $(BOOSTP)
-
-benchPoc1MIncs:
-	./poc1MIncs ${THREADS} > output/experiments/poc1MIncs.txt
 
 poc24Threads:
 	$(CC) $(BOOST) src/experiments/poc/poc24Threads.cc -o poc24Threads $(BOOSTP)
 
+benchPoc1MIncs:
+	./poc1MIncs ${THREADS} > output/experiments/poc1MIncs.txt
+
 benchPoc24Threads:
 	./poc24Threads > output/experiments/poc24Threads.txt
 
+poc: poc1MIncs poc24Threads
+
+benchPoc: benchPoc1MIncs benchPoc24Threads
+
+cleanPoc:
+	rm poc1MIncs poc24Threads
+
+#THREAD-LOCAL####################################################
 manualThreadLocal:
 	$(CC) $(FLAGS) src/experiments/threadLocal/manualThreadLocal.cc -o manualThreadLocal
 
 standardThreadLocal: 
 	$(CC) $(FLAGS) src/experiments/threadLocal/standardThreadLocal.cc -o standardThreadLocal
+
+boostThreadLocal: src/experiments/threadLocal/boostThreadLocal.cc
+	$(CC)  $(BOOST) src/experiments/threadLocal/boostThreadLocal.cc -o boostThreadLocal $(BOOSTP)
 
 benchManualThreadLocal:
 	./manualThreadLocal ${THREADS} > output/experiments/manualThreadLocal.txt
@@ -35,12 +46,15 @@ benchManualThreadLocal:
 benchStandardThreadLocal:
 	./standardThreadLocal ${THREADS} > output/experiments/standardThreadLocal.txt
 
-experiments: manualThreadLocal standardThreadLocal
+benchBoostThreadLocal:
+	./boostThreadLocal ${THREADS} > output/experiments/boostThreadLocal.txt
 
-benchExperiments: benchManualThreadLocal benchStandardThreadLocal
+threadLocal: manualThreadLocal standardThreadLocal boostThreadLocal
 
-cleanExperiments:
-	rm manualThreadLocal standardThreadLocal
+benchThreadLocal: benchManualThreadLocal benchStandardThreadLocal benchBoostThreadLocal
+
+cleanThreadLocal:
+	rm manualThreadLocal standardThreadLocal boostThreadLocal
 
 #P-Counter#########################################################
 agreggationCounterAtomic: src/P-Counter/agreggationCounterAtomic.cc 
