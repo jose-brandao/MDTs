@@ -1,15 +1,14 @@
-#include <iostream>
-#include <mutex>
+#include <atomic>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/tss.hpp>
 #include <chrono>
-#include <atomic>
 #include <iomanip>
-
+#include <iostream>
+#include <mutex>
 
 #define LOOP 200000000
 #define TARGET 50000000
-#define BENCH_RUNS 5
+#define BENCH_RUNS 1
 
 using namespace std;
 
@@ -32,7 +31,7 @@ public:
   }
 
   void strongInc(V tosum={1}){ //strongUpdate
-   gcount.fetch_add(tosum);  
+   gcount.fetch_add(tosum);
   }
 
   V weakValue(){ //weakRead
@@ -49,19 +48,6 @@ public:
     gcount.fetch_add(*lcount); //merging thread local state with global state
     *lgcount = gcount;  // updating the snapshot
     *lcount = 0; //resetting thread local state
-  }
-
-  V syncinc(){
-    V oldValue = gcount.load();
-    V newValue;
-
-    do{
-        if (oldValue < TARGET) newValue = oldValue + 1;
-        else break;
-    }
-    while (!gcount.compare_exchange_weak(oldValue, newValue));
-
-    return oldValue;
   }
 
 
@@ -91,58 +77,32 @@ public:
 counter<int> mdt;
 vector<int> NTHREADS;
 int SYNCFREQ [6] = {1,8,64,512,4096,32768};
-boost::condition_variable cond;
-boost::mutex mut;
-int sthreads = 0;
 
-void work(int syncFreqIndex, int nThreadsIndex){
-  static mutex m;
-  bool cswitch = false;
-  int syncincs = 0;
+void work(int syncFreqIndex){
 
-  mdt.init(); 
+  mdt.init();
+
   mdt.merge();
 
-  int threshold = TARGET - ((NTHREADS[nThreadsIndex]) * SYNCFREQ[syncFreqIndex]);
-
   for (int i=0; i < LOOP; i++){
-    if(!cswitch){
-      if(i%SYNCFREQ[syncFreqIndex] == 1){ 
-        mdt.merge();
-      }
 
-      if(mdt.weakValue() >= threshold) {
-        mdt.merge();
-
-        mut.lock();
-        sthreads++;
-        if(sthreads==NTHREADS[nThreadsIndex]) cond.notify_all();
-        mut.unlock();
-
-        boost::unique_lock<boost::mutex> lock(mut);
-        while(sthreads < NTHREADS[nThreadsIndex]){
-            cond.wait(lock);
-        }
-
-        cswitch = true;
-        continue;
-      }
-
-      mdt.weakInc();
-
-      if(i%SYNCFREQ[syncFreqIndex] == 0){ 
-        mdt.merge();
-      }
-
+    if(i%SYNCFREQ[syncFreqIndex] == 1){
+      mdt.merge();
     }
-    else{
-      if (mdt.syncinc() >= TARGET){
-        syncincs++;
-        break;
-      }
-      syncincs++;
+
+    if(mdt.weakValue() >= TARGET) {
+      mdt.merge();
+      break;
     }
+
+    mdt.weakInc();
+
+    if(i%SYNCFREQ[syncFreqIndex] == 0){
+      mdt.merge();
+    }
+
   }
+
 }
 
 void benchmarkPerFreq(int syncFreqIndex){
@@ -152,15 +112,12 @@ void benchmarkPerFreq(int syncFreqIndex){
       std::list<double> counters;
       std::list<double> throughs;
 
-      int threshold = TARGET - ((NTHREADS[k]) * SYNCFREQ[syncFreqIndex]);
-
       for(int i= 0; i< BENCH_RUNS; i++){
         steady_clock::time_point t1 = steady_clock::now();
 
-        sthreads = 0;
         boost::thread_group threads;
-        for (int a=0; a < NTHREADS[k]; a++){ 
-          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex),boost::cref(k)));
+        for (int a=0; a < NTHREADS[k]; a++){
+          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex)));
         }
 
         threads.join_all();
@@ -179,7 +136,7 @@ void benchmarkPerFreq(int syncFreqIndex){
       double sumTimes = 0;
       for(double t: times){
         sumTimes += t;
-      } 
+      }
 
       double finalTime = sumTimes/times.size();
       cout << fixed;
@@ -187,13 +144,14 @@ void benchmarkPerFreq(int syncFreqIndex){
       double sumCounters = 0;
       for(double c: counters){
         sumCounters += c;
-      } 
+      }
       double finalCounter = (int)(sumCounters/counters.size());
+
 
       double sumThroughs = 0;
       for(double th: throughs){
         sumThroughs += th;
-      } 
+      }
       double finalThroughs = sumThroughs/throughs.size();
 
       //double overshoot = ((finalCounter-TARGET)*100)/TARGET;
@@ -208,11 +166,10 @@ int main(int argc, char** argv){
     }
 
     for(int i=0; i<6;i++){
-        cout << "***************SYNCFREQ: " << SYNCFREQ[i] << " ***************"<< endl;
+        cout << "***************SYNCFREQ: " << SYNCFREQ[i] << " ***************" << endl;
         benchmarkPerFreq(i);
         cout << endl;
     }
 
     return 0;
 }
-

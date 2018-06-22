@@ -8,7 +8,7 @@
 
 #define LOOP 100000000
 #define TARGET 50000000
-#define BENCH_RUNS 5
+#define BENCH_RUNS 1
 
 using namespace std;
 

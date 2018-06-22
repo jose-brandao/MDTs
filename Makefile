@@ -57,27 +57,33 @@ cleanThreadLocal:
 	rm manualThreadLocal standardThreadLocal boostThreadLocal
 
 #P-Counter#########################################################
-agreggationCounterAtomic: src/P-Counter/agreggationCounterAtomic.cc 
-	$(CC)  $(BOOST) src/P-Counter/agreggationCounterAtomic.cc -o agreggationCounterAtomic $(BOOSTP)
+pCounterAtomic: src/P-Counter/pCounterAtomic.cc 
+	$(CC)  $(BOOST) src/P-Counter/pCounterAtomic.cc -o pCounterAtomic $(BOOSTP)
 
-agreggationCounterAtomicHybrid: src/P-Counter/agreggationCounterAtomicHybrid.cc 
-	$(CC)  $(BOOST) src/P-Counter/agreggationCounterAtomicHybrid.cc -o agreggationCounterAtomicHybrid $(BOOSTP)
+pCounterHybrid: src/P-Counter/pCounterHybrid.cc 
+	$(CC)  $(BOOST) src/P-Counter/pCounterHybrid.cc -o pCounterHybrid $(BOOSTP)
+
+pCounterHybridv2: src/P-Counter/pCounterHybridv2.cc 
+	$(CC)  $(BOOST) src/P-Counter/pCounterHybridv2.cc -o pCounterHybridv2 $(BOOSTP)
 
 syncCounter: src/P-Counter/syncCounter.cc 
 	$(CC)  $(BOOST) src/P-Counter/syncCounter.cc -o syncCounter $(BOOSTP)
 
+benchPCounterAtomic:
+	./pCounterAtomic ${THREADS} > output/P-Counter/pCounterAtomic.txt
+
+benchPCounterHybrid:
+	./pCounterHybrid ${THREADS} > output/P-Counter/pCounterHybrid.txt
+
+benchPCounterHybridv2:
+	./pCounterHybridv2 ${THREADS} > output/P-Counter/pCounterHybridv2.txt
+
 benchSyncCounter:
 	./syncCounter ${THREADS} > output/P-Counter/syncCounter.txt
 
-benchAgreggationCounterAtomic:
-	./agreggationCounterAtomic ${THREADS} > output/P-Counter/agreggationCounterAtomic.txt
+pCounters: pCounterAtomic pCounterHybrid pCounterHybridv2 syncCounter
 
-benchAgreggationCounterAtomicHybrid:
-	./agreggationCounterAtomicHybrid ${THREADS} > output/P-Counter/agreggationCounterAtomicHybrid.txt
-
-pCounters: agreggationCounterAtomic agreggationCounterAtomicHybrid syncCounter
-
-benchPCounters: benchSyncCounter benchAgreggationCounterAtomic benchAgreggationCounterAtomicHybrid
+benchPCounters: benchSyncCounter benchPCounterAtomic benchPCounterHybrid benchPCounterHybridv2
 
 cleanPCounters: 
-	rm agreggationCounterAtomic agreggationCounterAtomicHybrid syncCounter
+	rm pCounterAtomic pCounterHybrid pCounterHybridv2 syncCounter
