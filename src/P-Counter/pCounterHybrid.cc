@@ -9,7 +9,7 @@
 
 #define LOOP 200000000
 #define TARGET 50000000
-#define BENCH_RUNS 1
+#define BENCH_RUNS 10
 
 using namespace std;
 
@@ -51,7 +51,7 @@ public:
     *lcount = 0; //resetting thread local state
   }
 
-  V syncinc(){
+  V syncInc(){
     V oldValue = gcount.load();
     V newValue;
 
@@ -98,7 +98,6 @@ int sthreads = 0;
 void work(int syncFreqIndex, int nThreadsIndex){
   static mutex m;
   bool cswitch = false;
-  int syncincs = 0;
 
   mdt.init(); 
   mdt.merge();
@@ -136,11 +135,9 @@ void work(int syncFreqIndex, int nThreadsIndex){
 
     }
     else{
-      if (mdt.syncinc() >= TARGET){
-        syncincs++;
+      if (mdt.syncInc() >= TARGET){
         break;
       }
-      syncincs++;
     }
   }
 }

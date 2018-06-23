@@ -87,3 +87,7 @@ benchPCounters: benchSyncCounter benchPCounterAtomic benchPCounterHybrid benchPC
 
 cleanPCounters: 
 	rm pCounterAtomic pCounterHybrid pCounterHybridv2 syncCounter
+
+#PN-Counter#########################################################
+pnCounter: src/PN-Counter/pnCounter.cc 
+	$(CC)  $(BOOST) src/PN-Counter/pnCounter.cc -o pnCounter $(BOOSTP)
