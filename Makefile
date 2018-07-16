@@ -4,11 +4,11 @@ FLAGS = -std=c++11 -ferror-limit=2
 BOOST = -std=c++14 -O3
 BOOSTP = -lboost_system -lboost_filesystem -lboost_thread-mt
 
-all: experiments pCounters
+all: poc threadLocal pCounters
 
-benchAll: benchExperiments benchPCounters
+benchAll: benchPoc benchThreadLocal benchPCounters
 
-clean: cleanExperiments cleanPCounters
+clean: cleanExperiments cleanThreadLocal cleanPCounters
 
 #POC####################################################
 poc1MIncs:
@@ -56,6 +56,11 @@ benchThreadLocal: benchManualThreadLocal benchStandardThreadLocal benchBoostThre
 cleanThreadLocal:
 	rm manualThreadLocal standardThreadLocal boostThreadLocal
 
+#CRDTS################################################################
+
+counterArray: src/experiments/crdts/counterArray.cc
+	$(CC)  $(BOOST) src/experiments/crdts/counterArray.cc -o counterArray $(BOOSTP)
+
 #P-Counter#########################################################
 pCounterAtomic: src/P-Counter/pCounterAtomic.cc 
 	$(CC)  $(BOOST) src/P-Counter/pCounterAtomic.cc -o pCounterAtomic $(BOOSTP)
@@ -89,5 +94,5 @@ cleanPCounters:
 	rm pCounterAtomic pCounterHybrid pCounterHybridv2 syncCounter
 
 #PN-Counter#########################################################
-pnCounter: src/PN-Counter/pnCounter.cc 
+pnCounter: src/PN-Counter/pnCounter.cc
 	$(CC)  $(BOOST) src/PN-Counter/pnCounter.cc -o pnCounter $(BOOSTP)
