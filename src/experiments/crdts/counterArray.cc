@@ -7,6 +7,9 @@
 
 using namespace std;
 #define MAXTHREADS 100
+#define TARGET 50000000
+#define LOOP 200000000
+#define BENCH_RUNS 10
 
 
 class ThreadId{
@@ -31,6 +34,10 @@ class ThreadId{
             } 
             m.unlock();
             return threadLocalId;
+        }
+
+        int getCount(){
+            return count;
         }
 
         void reset(){
@@ -73,6 +80,12 @@ class InnerCounter{
                 counters[i] = max(counters[i], from.getCounterEntry(i));
             }
         }
+
+        void reset(){
+            for(int i=0;i<threadNumber; i++){
+                counters[i]=0;
+            }
+        }
 };
 
 
@@ -111,31 +124,111 @@ class CRDTCounter{
                 localCounters[threadLocalId]->merge(globalCounter);
             m.unlock();
         }
+
+        void reset(){
+            globalCounter.reset();
+            for(int i=0; i<threadId.getCount(); i++){
+                localCounters[i]->reset();
+            }
+            threadId.reset();
+        }
 };
 
-CRDTCounter crdt(10);
-mutex m;
-void work(int a){    
-    crdt.increment();
+CRDTCounter crdt(100);
+vector<int> NTHREADS;
+int SYNCFREQ [6] = {1,8,64,512,4096,32768};
+
+void work(int syncFreqIndex){
+
+  crdt.merge();
+
+  for (int i=0; i < LOOP; i++){
+
+    if(i%SYNCFREQ[syncFreqIndex] == 1){
+      crdt.merge();
+    }
+
+    if(crdt.getValue() >= TARGET) {
+      crdt.merge();
+      break;
+    }
+
     crdt.increment();
 
-    crdt.merge();
+    if(i%SYNCFREQ[syncFreqIndex] == 0){
+      crdt.merge();
+    }
 
-    m.lock();
-    int value = crdt.getValue();
-    cout << "FINAL VALUE THREAD: " << value << endl;
-    m.unlock();
+  }
+
+}
+
+void benchmarkPerFreq(int syncFreqIndex){
+    using namespace std::chrono;
+    for(int k = 0; k < NTHREADS.size(); k++){
+      std::list<double> times;
+      std::list<double> counters;
+      std::list<double> throughs;
+
+      for(int i= 0; i< BENCH_RUNS; i++){
+        steady_clock::time_point t1 = steady_clock::now();
+
+        boost::thread_group threads;
+        for (int a=0; a < NTHREADS[k]; a++){
+          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex)));
+        }
+
+        threads.join_all();
+
+        steady_clock::time_point t2 = steady_clock::now();
+
+        duration<double> ti = duration_cast<duration<double>>(t2 - t1);
+
+        times.push_back(ti.count());
+        counters.push_back(crdt.getGlobalValue());
+        throughs.push_back(crdt.getGlobalValue()/ti.count());
+
+        crdt.reset();
+      }
+
+      double sumTimes = 0;
+      for(double t: times){
+        sumTimes += t;
+      }
+
+      double finalTime = sumTimes/times.size();
+      cout << fixed;
+
+      double sumCounters = 0;
+      for(double c: counters){
+        sumCounters += c;
+      }
+      double finalCounter = (int)(sumCounters/counters.size());
+      cout << "FINAL: " << finalCounter << endl;
+
+      double sumThroughs = 0;
+      for(double th: throughs){
+        sumThroughs += th;
+      }
+      double finalThroughs = sumThroughs/throughs.size();
+
+      double overshoot = ((finalCounter-TARGET)*100)/TARGET;
+
+      cout << (int)finalThroughs << "," << NTHREADS[k] << endl;
+    }
 }
 
 int main(int argc, char** argv){
-    boost::thread_group threads;
-    for(int a=0; a < 10; a++){
-        threads.create_thread(boost::bind(work, boost::cref(a)));
-    } 
-    threads.join_all();
+    for(int i=1; i<argc; i++){
+      NTHREADS.push_back(atoi(argv[i]));
+    }
 
-    cout << "MAIN: " << crdt.getGlobalValue() << endl;
-    //fazer benchmark
+    for(int i=0; i<6;i++){
+        cout << "***************SYNCFREQ: " << SYNCFREQ[i] << " ***************" << endl;
+        benchmarkPerFreq(i);
+        cout << endl;
+    }
+
     return 0;
 }
 

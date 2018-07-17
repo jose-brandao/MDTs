@@ -61,6 +61,22 @@ cleanThreadLocal:
 counterArray: src/experiments/crdts/counterArray.cc
 	$(CC)  $(BOOST) src/experiments/crdts/counterArray.cc -o counterArray $(BOOSTP)
 
+benchCounterArray:
+	./counterArray ${THREADS} > output/experiments/counterArray.txt
+
+counterMap: src/experiments/crdts/counterMap.cc
+	$(CC)  $(BOOST) src/experiments/crdts/counterMap.cc -o counterMap $(BOOSTP)
+
+benchCounterMap:
+	./counterArray ${THREADS} > output/experiments/counterArray.txt
+
+crdts: counterArray counterMap
+
+benchCrdts: benchCounterArray benchCounterMap
+
+cleanCrdts:
+	rm counterArray counterMap
+
 #P-Counter#########################################################
 pCounterAtomic: src/P-Counter/pCounterAtomic.cc 
 	$(CC)  $(BOOST) src/P-Counter/pCounterAtomic.cc -o pCounterAtomic $(BOOSTP)
