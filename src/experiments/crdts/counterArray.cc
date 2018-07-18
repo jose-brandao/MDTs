@@ -169,7 +169,6 @@ void benchmarkPerFreq(int syncFreqIndex){
       std::list<double> times;
       std::list<double> counters;
       std::list<double> throughs;
-
       for(int i= 0; i< BENCH_RUNS; i++){
         steady_clock::time_point t1 = steady_clock::now();
 
@@ -204,7 +203,6 @@ void benchmarkPerFreq(int syncFreqIndex){
         sumCounters += c;
       }
       double finalCounter = (int)(sumCounters/counters.size());
-      cout << "FINAL: " << finalCounter << endl;
 
       double sumThroughs = 0;
       for(double th: throughs){

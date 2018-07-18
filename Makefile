@@ -68,7 +68,7 @@ counterMap: src/experiments/crdts/counterMap.cc
 	$(CC)  $(BOOST) src/experiments/crdts/counterMap.cc -o counterMap $(BOOSTP)
 
 benchCounterMap:
-	./counterArray ${THREADS} > output/experiments/counterArray.txt
+	./counterMap ${THREADS} > output/experiments/counterMap.txt
 
 crdts: counterArray counterMap
 
