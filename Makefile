@@ -4,11 +4,11 @@ FLAGS = -std=c++11 -ferror-limit=2
 BOOST = -std=c++14 -O3
 BOOSTP = -lboost_system -lboost_filesystem -lboost_thread-mt
 
-all: poc threadLocal pCounters
+all: poc threadLocal pCounters crdts
 
-benchAll: benchPoc benchThreadLocal benchPCounters
+benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts
 
-clean: cleanExperiments cleanThreadLocal cleanPCounters
+clean: cleanExperiments cleanThreadLocal cleanPCounters cleanCrdts
 
 #POC####################################################
 poc1MIncs:
@@ -112,3 +112,16 @@ cleanPCounters:
 #PN-Counter#########################################################
 pnCounter: src/PN-Counter/pnCounter.cc
 	$(CC)  $(BOOST) src/PN-Counter/pnCounter.cc -o pnCounter $(BOOSTP)
+
+#G-Bag#########################################################
+gBag: src/G-Bag/gBag.cc 
+	$(CC)  $(BOOST) src/G-Bag/gBag.cc -o gBag $(BOOSTP)
+
+gBagRWLocks: src/G-Bag/gBagRWLocks.cc 
+	$(CC)  $(BOOST) src/G-Bag/gBagRWLocks.cc -o gBagRWLocks $(BOOSTP)
+
+benchGBag:
+	./gBag ${THREADS} > output/G-Bag/gBag.txt
+
+benchGBagRWLocks:
+	./gBagRWLocks ${THREADS} > output/G-Bag/gBagRWLocks.txt

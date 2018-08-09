@@ -21,7 +21,7 @@ private:
 
 public:
 
- void init(){ //instatiate thread local object parts
+ void init(){ //instatiate thread local objects
     lcount.reset(new V(0));
     lgcount.reset(new V(0));
   }
