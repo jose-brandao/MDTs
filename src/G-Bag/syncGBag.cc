@@ -2,7 +2,6 @@
 #include <mutex>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/tss.hpp>
-#include <tuple>
 
 #define LOOP 1000000
 #define BENCH_RUNS 10
@@ -21,40 +20,11 @@ class gBag {
     //global state
     node<V> * globalHead=NULL;
 
-    //thread-local state
-    boost::thread_specific_ptr<node<V> *> localHead;
-    boost::thread_specific_ptr<node<V> **> localGraft;
-    boost::thread_specific_ptr<bool> last;
-
     //class auxiliars
     mutex m;
 
     public:
-    void init(){
-        localHead.reset(new node<V>*); 
-        localGraft.reset(new node<V>**);
-        last.reset(new bool(false));
-
-        *localHead = NULL;
-        *localGraft = NULL;
-
-    }
-
-    bool searchLocally(const V value) {
-        node<V>* tempNode=*localHead;
-
-        while(tempNode != NULL){
-            if(tempNode->payload == value ) {
-                return true;
-            }
-            tempNode=tempNode->next;
-        }
-        return false; 
-    }
-
     bool strongLookup(const V value) {
-        if(*last && searchLocally(value)) return true;
-
         m.lock();
         node<V>* tempNode=globalHead;
         while(tempNode != NULL){
@@ -69,18 +39,6 @@ class gBag {
         return false; 
     }
 
-    void weakAdd(const V value){
-        node<V>* tempNode = new node<V>;
-        tempNode->payload = value;
-        tempNode->next = *localHead;
-        
-        if (*last==false){
-            *localGraft = &(tempNode->next);
-            *last = true;
-        }
-        *localHead = tempNode;
-    }
-
     void strongAdd(const V value){
         node<V>* tempNode = new node<V>;
         tempNode->payload = value;
@@ -90,19 +48,6 @@ class gBag {
         globalHead = tempNode;
         m.unlock();
 
-    }
-
-    void merge() {
-        if(*last) { //because we may not have a weak add
-
-          m.lock(); // Protect global head accesses 
-          **localGraft=globalHead; //*localGraft is &tail->next(node*), we are saying tail will point to the global head (assign by reference)
-          globalHead=*localHead;
-          m.unlock();
-
-          *last=false;
-          *localHead=NULL;          
-        }
     }
 
    ////////////////////////////BENCHMARKING PURPOSES
@@ -139,17 +84,6 @@ class gBag {
         m.unlock();
     }
 
-    void printLocalLinkedList(){
-        node<V>* tempNode = *(localHead.get());
-        cout << "LOCAL LIST: ";
-        while( tempNode != NULL ) {
-            cout << tempNode->payload << "--> ";
-            node<V>* next = tempNode->next;
-            tempNode = next;
-        }
-        cout << endl;
-    }
-
     void reset(){
         cleanLinkedList();
     }
@@ -157,29 +91,17 @@ class gBag {
 
 gBag<int> mdt;
 vector<int> NTHREADS;
-int SYNCFREQ [6] = {1,8,64,512,4096,32768};
-void work(int syncFreqIndex){
-  mdt.init();
-  mdt.merge();
-
-
+void work(){
   for (int i=0; i < LOOP; i++){
-    if(i%SYNCFREQ[syncFreqIndex] == 1){
-      mdt.merge();
-    }
-    mdt.weakAdd(i);
+    mdt.strongAdd(i);
     
     if(i%10000 == 0){
       mdt.strongLookup(LOOP/2);
     }
-
-    if(i%SYNCFREQ[syncFreqIndex] == 0){
-      mdt.merge();
-    }
   }
 }
 
-void benchmarkPerFreq(int syncFreqIndex){
+void benchmark(){
     using namespace std::chrono;
     for(int k = 0; k < NTHREADS.size(); k++){
       std::list<double> times;
@@ -191,7 +113,7 @@ void benchmarkPerFreq(int syncFreqIndex){
 
         boost::thread_group threads;
         for (int a=0; a < NTHREADS[k]; a++){
-          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex)));
+          threads.create_thread(boost::bind(work));
         }
 
         threads.join_all();
@@ -237,11 +159,6 @@ int main(int argc, char** argv){
       NTHREADS.push_back(atoi(argv[i]));
     }
 
-    for(int i=0; i<6;i++){
-        cout << "***************SYNCFREQ: " << SYNCFREQ[i] << " ***************" << endl;
-        benchmarkPerFreq(i);
-        cout << endl;
-    }
-
+    benchmark();
     return 0;
 }

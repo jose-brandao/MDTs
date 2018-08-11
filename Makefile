@@ -120,8 +120,21 @@ gBag: src/G-Bag/gBag.cc
 gBagRWLocks: src/G-Bag/gBagRWLocks.cc 
 	$(CC)  $(BOOST) src/G-Bag/gBagRWLocks.cc -o gBagRWLocks $(BOOSTP)
 
+syncGBag: src/G-Bag/syncGBag.cc
+	$(CC)  $(BOOST) src/G-Bag/syncGBag.cc -o syncGBag $(BOOSTP)
+
 benchGBag:
 	./gBag ${THREADS} > output/G-Bag/gBag.txt
 
 benchGBagRWLocks:
 	./gBagRWLocks ${THREADS} > output/G-Bag/gBagRWLocks.txt
+
+benchSyncGBag:
+	./syncGBag ${THREADS} > output/G-Bag/syncGBag.txt
+
+gBags: gBag gBagRWLocks syncGBag
+
+benchGBags: benchGBag benchGBagRWLocks benchGBag
+
+cleanGBags:
+	rm gBag gBagRWLocks syncGBag

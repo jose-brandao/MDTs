@@ -27,7 +27,7 @@ class gBag {
     boost::thread_specific_ptr<bool> last;
 
     //class auxiliars
-    mutex m;
+    mutable boost::shared_mutex m;
 
     public:
     void init(){
@@ -56,16 +56,14 @@ class gBag {
         if(*last && searchLocally(value)) return true;
 
 
-        m.lock();
+        boost::shared_lock<boost::shared_mutex> lock(m);
         node<V>* tempNode=globalHead;
         while(tempNode != NULL){
             if(tempNode->payload == value ) {
-             m.unlock();
              return true;   
             }
             tempNode=tempNode->next;
         }
-        m.unlock();
 
         return false; 
     }
@@ -86,20 +84,17 @@ class gBag {
         node<V>* tempNode = new node<V>;
         tempNode->payload = value;
 
-        m.lock();
+        boost::unique_lock<boost::shared_mutex> lock(m);
         tempNode->next = globalHead;
         globalHead = tempNode;
-        m.unlock();
-
     }
 
     void merge() {
         if(*last) { //because we may not have a weak add
 
-          m.lock(); // Protect global head accesses 
+          boost::unique_lock<boost::shared_mutex> lock(m); // Protect global head accesses 
           **localGraft=globalHead; //*localGraft is &tail->next(node*), we are saying tail will point to the global head (assign by reference)
           globalHead=*localHead;
-          m.unlock();
 
           *last=false;
           *localHead=NULL;          
@@ -128,7 +123,7 @@ class gBag {
     }
 
     void printLinkedList(){
-        m.lock();
+        boost::unique_lock<boost::shared_mutex> lock(m);
         node<V>* tempNode = globalHead;
         cout << "LIST: ";
         while( tempNode != NULL ) {
@@ -137,7 +132,6 @@ class gBag {
             tempNode = next;
         }
         cout << endl;
-        m.unlock();
     }
 
     void printLocalLinkedList(){
