@@ -4,11 +4,11 @@ FLAGS = -std=c++11 -ferror-limit=2
 BOOST = -std=c++14 -O3
 BOOSTP = -lboost_system -lboost_filesystem -lboost_thread-mt
 
-all: poc threadLocal pCounters crdts
+all: poc threadLocal pCounters crdts gBags
 
-benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts
+benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts benchGBags
 
-clean: cleanExperiments cleanThreadLocal cleanPCounters cleanCrdts
+clean: cleanExperiments cleanThreadLocal cleanPCounters cleanCrdts cleanGBags
 
 #POC####################################################
 poc1MIncs:
@@ -138,3 +138,16 @@ benchGBags: benchGBag benchGBagRWLocks benchGBag
 
 cleanGBags:
 	rm gBag gBagRWLocks syncGBag
+
+#OR-SET#########################################################
+orSet: src/OR-Set/orSet.cc 
+	$(CC)  $(BOOST) src/OR-Set/orSet.cc -o orSet $(BOOSTP)
+
+orSetv2: src/OR-Set/orSetv2.cc 
+	$(CC)  $(BOOST) src/OR-Set/orSetv2.cc -o orSetv2 $(BOOSTP)
+
+benchOrSet:
+	./orSet ${THREADS} > output/OR-Set/orSet.txt
+
+benchOrSetv2:
+	./orSetv2 ${THREADS} > output/OR-Set/orSetv2.txt	
