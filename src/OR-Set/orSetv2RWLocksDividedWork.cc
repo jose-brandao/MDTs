@@ -7,8 +7,8 @@
 #include <list>
 #include <tuple>
 
-#define LOOP 1000000
-#define BENCH_RUNS 10
+#define LOOP 100000
+#define BENCH_RUNS 3
 
 using namespace std;
 using namespace boost;
@@ -33,7 +33,7 @@ private:
   boost::thread_specific_ptr< list< pair< node<T>*, int> > > localRemove;
 
   //class auxiliars
-  boost::mutex m;
+  mutable boost::shared_mutex m;
 
 void insert(T val, node<T> *leaf, T vid){
   if(val < leaf->val){
@@ -153,11 +153,10 @@ void strongRemoveHelper(T val, int vid){
 }
 
 void readSet(node<T> * leaf){
+    boost::shared_lock<boost::shared_mutex> lock(m);
     if(leaf == NULL) return;
     if(leaf!=NULL) {
-      m.lock();
       cout << leaf->val << "\n";
-      m.unlock();
     }
   
     readSet(leaf->left);
@@ -195,14 +194,12 @@ public:
       if(pair.first == val) return true;
     }
 
-    m.lock();
+    boost::shared_lock<boost::shared_mutex> lock(m);
     node<T>* n = searchNode(root, val);
     if(n == NULL) {
-        m.unlock();
         return false;
     }
     list<std::tuple<int,int,int>> vinfo (n->vinfo);
-    m.unlock();
 
     for(auto v : vinfo){
       if(get<2>(v) == 0 && get<0>(v) <= *lvid) return true; 
@@ -217,14 +214,12 @@ public:
       if(pair.first == val) return true;
     }
 
-    m.lock();
+    boost::shared_lock<boost::shared_mutex> lock(m);
     node<T>* n = searchNode(root, val);
     if(n == NULL) {
-        m.unlock();
         return false;
     }
     list<std::tuple<int,int,int>> vinfo (n->vinfo);
-    m.unlock();
     
     for(auto v : vinfo){
       if(get<2>(v) == 0) return true; 
@@ -235,39 +230,35 @@ public:
 
 void weakAdd(T val){
     //finding an estimated position for the insertion
-    m.lock();
+    boost::shared_lock<boost::shared_mutex> lock(m);
     node<T>* parent = findParentNode(root, val, root);
-    m.unlock();
     (*localAdd).push_front(make_pair(val, parent));
   }
 
   void strongAdd(T val){
-      m.lock();
+      boost::unique_lock<boost::shared_mutex> lock(m);
       strongAddHelper(val, gvid);
-      m.unlock();
   }
 
   void weakRemove(T val){
-    m.lock();
+    boost::shared_lock<boost::shared_mutex> lock(m);
     node<T>* n = searchNode(root, val); 
     
     if(n != NULL && (get<2>((n->vinfo).front())==0)){ //only remove if we can observe it
       int last = get<1>((n->vinfo).front());
       (*localRemove).push_front(make_pair(n,last));
     }  
-    m.unlock();
   
     removeFromLocalAdded(val);
   }
 
     void strongRemove(T val){
-      m.lock();
+      boost::unique_lock<boost::shared_mutex> lock(m);
       strongRemoveHelper(val, gvid);
-      m.unlock();
   }
   
   void merge(){
-    m.lock();
+    boost::unique_lock<boost::shared_mutex> lock(m);
     int newVid = gvid+1;
 
     //merge weak adds
@@ -284,7 +275,6 @@ void weakAdd(T val){
 
     gvid = newVid;
     *lvid = gvid;
-    m.unlock();
   }
 
 
@@ -322,8 +312,15 @@ void weakAdd(T val){
 
 orSet<int> mdt;
 vector<int> NTHREADS;
+std::atomic<int> threadCount;
+std::mutex m;
 int SYNCFREQ [6] = {1,8,64,512,4096,32768};
-void work(int syncFreqIndex){
+void work(int syncFreqIndex, int operationsPerThread){
+  threadCount++;
+  int localCount = threadCount;
+  int startNumber = operationsPerThread * (localCount-1);
+  int endNumber = startNumber + operationsPerThread;
+
   mdt.init();
   mdt.merge();
 
@@ -333,11 +330,10 @@ void work(int syncFreqIndex){
     }
 
     if(i%10==2){ 
-      mdt.strongRemove(i-1);
+      mdt.weakRemove(i-1);
     }
 
-    // cout << "INSERI O " << i << endl;
-    mdt.strongAdd(i);
+    mdt.weakAdd(i);
   
     if(i%10000 == 0){
       mdt.strongLookup(LOOP/2);
@@ -354,12 +350,13 @@ void work(int syncFreqIndex){
 void benchmarkPerFreq(int syncFreqIndex){
     using namespace std::chrono;
     for(int k = 0; k < NTHREADS.size(); k++){
+      cout << "******************** THREAD NUMBER: " << NTHREADS[k] <<  " ***********************" << endl;
       std::list<double> times;
       std::list<double> elementCount;
       std::list<double> throughs;
 
       for(int i= 0; i< BENCH_RUNS; i++){
-        
+        cout << ">>>>>>>>>>>>>>>>>>>>>>>>> BENCH RUN: " << i << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
         //ensure balancing on the tree
         for(int i=0; i < LOOP; i+=500){
             int right = LOOP/2 + i;
@@ -376,22 +373,23 @@ void benchmarkPerFreq(int syncFreqIndex){
         steady_clock::time_point t1 = steady_clock::now();
 
         boost::thread_group threads;
+        int operationsPerThread = LOOP/NTHREADS[k];
         for (int a=0; a < NTHREADS[k]; a++){
-          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex)));
+          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex),  boost::cref(operationsPerThread)));
         }
-
         threads.join_all();
+        threadCount=0;
 
         steady_clock::time_point t2 = steady_clock::now();
 
         duration<double> ti = duration_cast<duration<double>>(t2 - t1);
-
+        cout << "DURATION " << ti.count() << endl;
         times.push_back(ti.count());
 
-        int globalCount = mdt.globalCountMdt() * NTHREADS[k];
+        int globalCount = LOOP;
 
         elementCount.push_back(globalCount);
-        throughs.push_back(globalCount/ti.count());
+        throughs.push_back(globalCount /ti.count());
 
         mdt.reset();
       }

@@ -322,12 +322,18 @@ void weakAdd(T val){
 
 orSet<int> mdt;
 vector<int> NTHREADS;
+std::atomic<int> threadCount;
 int SYNCFREQ [6] = {1,8,64,512,4096,32768};
-void work(int syncFreqIndex){
+void work(int syncFreqIndex, int operationsPerThread){
+  threadCount++;
+  int localCount = threadCount;
+  int startNumber = operationsPerThread * (localCount-1);
+  int endNumber = startNumber + operationsPerThread;
+
   mdt.init();
   mdt.merge();
 
-  for (int i=0; i < LOOP; i++){
+  for (int i=startNumber; i < endNumber; i++){
     if(i%SYNCFREQ[syncFreqIndex] == 1){
       mdt.merge();
     }
@@ -376,11 +382,12 @@ void benchmarkPerFreq(int syncFreqIndex){
         steady_clock::time_point t1 = steady_clock::now();
 
         boost::thread_group threads;
+        int operationsPerThread = LOOP/NTHREADS[k];
         for (int a=0; a < NTHREADS[k]; a++){
-          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex)));
+          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex),  boost::cref(operationsPerThread)));
         }
-
         threads.join_all();
+        threadCount=0;
 
         steady_clock::time_point t2 = steady_clock::now();
 
@@ -388,10 +395,10 @@ void benchmarkPerFreq(int syncFreqIndex){
 
         times.push_back(ti.count());
 
-        int globalCount = mdt.globalCountMdt() * NTHREADS[k];
+        int globalCount = LOOP;
 
         elementCount.push_back(globalCount);
-        throughs.push_back(globalCount/ti.count());
+        throughs.push_back(globalCount /ti.count());
 
         mdt.reset();
       }

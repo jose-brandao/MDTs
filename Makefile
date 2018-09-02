@@ -149,8 +149,14 @@ orSetv2: src/OR-Set/orSetv2.cc
 orSetv2RWLocks: src/OR-Set/orSetv2RWLocks.cc 
 	$(CC)  $(BOOST) src/OR-Set/orSetv2RWLocks.cc -o orSetv2RWLocks $(BOOSTP)
 
+orSetv2RWLocksDividedWork: src/OR-Set/orSetv2RWLocksDividedWork.cc 
+	$(CC)  $(BOOST) src/OR-Set/orSetv2RWLocksDividedWork.cc -o orSetv2RWLocksDividedWork $(BOOSTP)
+
 orSetSync: src/OR-Set/orSetSync.cc 
 	$(CC)  $(BOOST) src/OR-Set/orSetSync.cc -o orSetSync $(BOOSTP)
+
+orSetSyncDividedWork: src/OR-Set/orSetSyncDividedWork.cc 
+	$(CC)  $(BOOST) src/OR-Set/orSetSyncDividedWork.cc -o orSetSyncDividedWork $(BOOSTP)
 
 benchOrSet:
 	./orSet ${THREADS} > output/OR-Set/orSet.txt
@@ -158,12 +164,24 @@ benchOrSet:
 benchOrSetV2:
 	./orSetv2 ${THREADS} > output/OR-Set/orSetv2.txt
 
-benchOrSetv2orSetv2RWLocks:
-	./orSetv2RWLocks ${THREADS} > output/OR-Set/orSetv2RWLocks.txt		
+benchOrSetv2RWLocks:
+	./orSetv2RWLocks ${THREADS} > output/OR-Set/orSetv2RWLocks.txt
 
-orSets: orSet orSetv2 orSetv2RWLocks
+benchOrSetv2RWLocksDividedWork:
+	./orSetv2RWLocksDividedWork ${THREADS} > output/OR-Set/orSetv2RWLocksDividedWork.txt
 
-benchOrSets: benchOrSet benchOrSetV2 benchOrSetv2orSetv2RWLocks
+benchOrSetSync:
+	./orSetSync ${THREADS} > output/OR-Set/orSetSync.txt
+
+benchOrSetSyncDividedWork:
+	./orSetSyncDividedWork ${THREADS} > output/OR-Set/orSetSyncDividedWork.txt	
+
+orSets: orSet orSetv2 orSetv2RWLocks orSetv2RWLocksDividedWork orSetSync orSetSyncDividedWork
+
+benchOrSets: benchOrSet benchOrSetV2 benchOrSetv2RWLocks benchOrSetv2RWLocksDividedWork benchOrSetSync benchOrSetSyncDividedWork  
 
 cleanOrSets:
-	rm orSet orSetv2 orSetv2RWLocks
+	rm orSet orSetv2 orSetv2RWLocks orSetv2RWLocksDividedWork orSetSync orSetSyncDividedWork
+
+#QUEUES#########################################################
+
