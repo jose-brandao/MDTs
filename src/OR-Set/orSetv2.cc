@@ -7,8 +7,8 @@
 #include <list>
 #include <tuple>
 
-#define LOOP 50000
-#define BENCH_RUNS 5
+#define LOOP 1000000
+#define BENCH_RUNS 10
 
 using namespace std;
 using namespace boost;
@@ -243,7 +243,7 @@ void weakAdd(T val){
 
   void strongAdd(T val){
       m.lock();
-      strongAddHelper(val);
+      strongAddHelper(val, gvid);
       m.unlock();
   }
 
@@ -262,7 +262,7 @@ void weakAdd(T val){
 
     void strongRemove(T val){
       m.lock();
-      strongRemoveHelper(val);
+      strongRemoveHelper(val, gvid);
       m.unlock();
   }
   

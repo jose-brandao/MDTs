@@ -4,11 +4,11 @@ FLAGS = -std=c++11 -ferror-limit=2
 BOOST = -std=c++14 -O3
 BOOSTP = -lboost_system -lboost_filesystem -lboost_thread-mt
 
-all: poc threadLocal pCounters crdts gBags
+all: poc threadLocal pCounters crdts gBags orSets
 
-benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts benchGBags
+benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts benchGBags benchOrSets
 
-clean: cleanExperiments cleanThreadLocal cleanPCounters cleanCrdts cleanGBags
+clean: cleanExperiments cleanThreadLocal cleanPCounters cleanCrdts cleanGBags cleanOrSets
 
 #POC####################################################
 poc1MIncs:
@@ -146,8 +146,24 @@ orSet: src/OR-Set/orSet.cc
 orSetv2: src/OR-Set/orSetv2.cc 
 	$(CC)  $(BOOST) src/OR-Set/orSetv2.cc -o orSetv2 $(BOOSTP)
 
+orSetv2RWLocks: src/OR-Set/orSetv2RWLocks.cc 
+	$(CC)  $(BOOST) src/OR-Set/orSetv2RWLocks.cc -o orSetv2RWLocks $(BOOSTP)
+
+orSetSync: src/OR-Set/orSetSync.cc 
+	$(CC)  $(BOOST) src/OR-Set/orSetSync.cc -o orSetSync $(BOOSTP)
+
 benchOrSet:
 	./orSet ${THREADS} > output/OR-Set/orSet.txt
 
-benchOrSetv2:
-	./orSetv2 ${THREADS} > output/OR-Set/orSetv2.txt	
+benchOrSetV2:
+	./orSetv2 ${THREADS} > output/OR-Set/orSetv2.txt
+
+benchOrSetv2orSetv2RWLocks:
+	./orSetv2RWLocks ${THREADS} > output/OR-Set/orSetv2RWLocks.txt		
+
+orSets: orSet orSetv2 orSetv2RWLocks
+
+benchOrSets: benchOrSet benchOrSetV2 benchOrSetv2orSetv2RWLocks
+
+cleanOrSets:
+	rm orSet orSetv2 orSetv2RWLocks

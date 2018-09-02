@@ -29,11 +29,11 @@ private:
 
   //thread-local state
   boost::thread_specific_ptr<int> lvid;
-  boost::thread_specific_ptr<list<T>> localAdd;
-  boost::thread_specific_ptr<list<T>> localRemove;
+  boost::thread_specific_ptr< list< pair< T, node<T>*> > > localAdd;
+  boost::thread_specific_ptr< list< pair< node<T>*, int> > > localRemove;
 
   //class auxiliars
-  boost::mutex m;
+  mutable boost::shared_mutex m;
 
 void insert(T val, node<T> *leaf, T vid){
   if(val < leaf->val){
@@ -84,16 +84,34 @@ node<T>* findParentNode(node<T> * leaf, T val, node<T> * parent){
 }
 
 void removeFromLocalAdded(T val){
-  typename std::list<T>::iterator itr = (*localAdd).begin();
+  typename std::list< pair<T,node<T>*> >::iterator itr = (*localAdd).begin();
   while (itr != (*localAdd).end()){ 
-    if((*itr) == val) {
+    if((*itr).first == val) {
       itr = (*localAdd).erase(itr);
     }
     else ++itr;
   }
 }
 
-void addHelper(T val, int vid){
+void weakAddHelper(T val, node<T>* possibleParent, int vid){
+    //start seaching from the possible parent
+    node<T>* n = searchNode(possibleParent, val);
+    if(n==NULL){
+        if (possibleParent != NULL) insert(val, possibleParent, vid);
+        else insertAtRoot(val, vid); //if possibleParent null, tree is empty
+    }
+    else{     
+        //node to insert already exists, just update vinfo
+        if(get<2>((n->vinfo).front()) > 0){
+            (n->vinfo).push_front(make_tuple(vid,vid,0)); //if removed insert new vinfo at head
+        }
+        else{
+            get<1>((n->vinfo).front())= vid; //if not update last of the head
+        }
+    }
+}
+
+void strongAddHelper(T val, int vid){
     //search for a node, if doesn't exist insert it. Otherwise just update
     node<T>* n = searchNode(root, val);
     if(n==NULL){
@@ -112,7 +130,19 @@ void addHelper(T val, int vid){
     }
 }
 
-void removeHelper(T val, int vid){
+void weakRemoveHelper(node<T>* node, int observedLast, int vid){
+  //check if was not removed by other threads meanwhile
+  bool notConcurrentlyRemoved = get<2>((node->vinfo).front()) == 0;
+
+  //check if was not updated by other threads meanwhile(add-wins)
+  bool notConcurrentlyUpdated = get<1>((node->vinfo).front()) == observedLast;
+
+  if(notConcurrentlyRemoved && notConcurrentlyUpdated){ 
+      get<2>((node->vinfo).front()) = vid;
+  }
+}
+
+void strongRemoveHelper(T val, int vid){
     //just need to check if node is != NULL and if removed is == 0
     node<T>* n = searchNode(root, val); 
     if(n != NULL){
@@ -123,11 +153,10 @@ void removeHelper(T val, int vid){
 }
 
 void readSet(node<T> * leaf){
+    boost::shared_lock<boost::shared_mutex> lock(m);
     if(leaf == NULL) return;
     if(leaf!=NULL) {
-      m.lock();
       cout << leaf->val << "\n";
-      m.unlock();
     }
   
     readSet(leaf->left);
@@ -155,24 +184,22 @@ public:
   }
 
   void init(){
-    localAdd.reset(new list<T>);
-    localRemove.reset(new list<T>);
+    localAdd.reset(new list<pair<T,node<T>*>>);
+    localRemove.reset(new list<pair<node<T>*,int>>);
     lvid.reset(new int(gvid));
   }
 
   bool weakLookup(T val){
-    for(T lval: *localAdd){  //checking on local added
-      if(lval == val) return true;
+    for(auto pair: *localAdd){
+      if(pair.first == val) return true;
     }
 
-    m.lock();
+    boost::shared_lock<boost::shared_mutex> lock(m);
     node<T>* n = searchNode(root, val);
     if(n == NULL) {
-        m.unlock();
         return false;
     }
     list<std::tuple<int,int,int>> vinfo (n->vinfo);
-    m.unlock();
 
     for(auto v : vinfo){
       if(get<2>(v) == 0 && get<0>(v) <= *lvid) return true; 
@@ -183,18 +210,16 @@ public:
   }
 
   bool strongLookup(T val){
-    for(T lval: *localAdd){     //checking on local added
-      if(lval == val) return true;
+    for(auto pair: *localAdd){
+      if(pair.first == val) return true;
     }
 
-    m.lock();
+    boost::shared_lock<boost::shared_mutex> lock(m);
     node<T>* n = searchNode(root, val);
     if(n == NULL) {
-        m.unlock();
         return false;
     }
     list<std::tuple<int,int,int>> vinfo (n->vinfo);
-    m.unlock();
     
     for(auto v : vinfo){
       if(get<2>(v) == 0) return true; 
@@ -203,51 +228,58 @@ public:
     return false;
   }
 
-  void weakAdd(T val){
-    (*localAdd).push_front(val);
+void weakAdd(T val){
+    //finding an estimated position for the insertion
+    boost::shared_lock<boost::shared_mutex> lock(m);
+    node<T>* parent = findParentNode(root, val, root);
+    (*localAdd).push_front(make_pair(val, parent));
   }
 
   void strongAdd(T val){
-      m.lock();
-      addHelper(val, gvid);
-      m.unlock();
+      boost::unique_lock<boost::shared_mutex> lock(m);
+      strongAddHelper(val, gvid);
   }
 
   void weakRemove(T val){
-    (*localRemove).push_front(val);
+    boost::shared_lock<boost::shared_mutex> lock(m);
+    node<T>* n = searchNode(root, val); 
+    
+    if(n != NULL && (get<2>((n->vinfo).front())==0)){ //only remove if we can observe it
+      int last = get<1>((n->vinfo).front());
+      (*localRemove).push_front(make_pair(n,last));
+    }  
+  
     removeFromLocalAdded(val);
   }
 
     void strongRemove(T val){
-      m.lock();
-      removeHelper(val, gvid);
-      m.unlock();
+      boost::unique_lock<boost::shared_mutex> lock(m);
+      strongRemoveHelper(val, gvid);
   }
   
   void merge(){
-    m.lock();
+    boost::unique_lock<boost::shared_mutex> lock(m);
     int newVid = gvid+1;
 
     //merge weak adds
-    for(T val: *localAdd){
-        addHelper(val, newVid);
+    for(auto pair: *localAdd){
+        weakAddHelper(pair.first, pair.second, newVid);
     }
     (*localAdd).clear();  
 
     //merge weak removes
-    for(T val: *localRemove){  
-        removeHelper(val, newVid);
+    for(auto pair: *localRemove){  
+        weakRemoveHelper(pair.first, pair.second, newVid);
     }
     (*localRemove).clear();
 
     gvid = newVid;
     *lvid = gvid;
-    m.unlock();
   }
 
 
 ////////////////////////////FOR DEBUGGING/BENCHMARK PURPOSES
-  void readSetMdt(){
+  void readSet(){
     readSet(root);
   }
 
