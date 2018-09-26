@@ -185,3 +185,21 @@ cleanOrSets:
 
 #QUEUES#########################################################
 
+hybridQueue: src/Queue/hybridQueue.cc 
+	$(CC)  $(BOOST) src/Queue/hybridQueue.cc -o hybridQueue $(BOOSTP)
+
+benchHybridQueue:
+	./hybridQueue ${THREADS} > output/Queue/hybridQueue.txt
+
+syncQueue: src/Queue/syncQueue.cc 
+	$(CC)  $(BOOST) src/Queue/syncQueue.cc -o syncQueue $(BOOSTP)
+
+benchSyncQueue:
+	./syncQueue ${THREADS} > output/Queue/syncQueue.txt
+
+queues: hybridQueue syncQueue
+
+benchQueues: benchHybridQueue benchSyncQueue
+
+cleanQueues:
+	rm hybridQueue syncQueue
