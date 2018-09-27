@@ -4,11 +4,11 @@ FLAGS = -std=c++11 -ferror-limit=2
 BOOST = -std=c++14 -O3
 BOOSTP = -lboost_system -lboost_filesystem -lboost_thread-mt
 
-all: poc threadLocal pCounters crdts gBags orSets
+all: poc threadLocal pCounters crdts gBags orSets queues
 
-benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts benchGBags benchOrSets
+benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts benchGBags benchOrSets benchQueues
 
-clean: cleanExperiments cleanThreadLocal cleanPCounters cleanCrdts cleanGBags cleanOrSets
+clean: cleanExperiments cleanThreadLocal cleanPCounters cleanCrdts cleanGBags cleanOrSets cleanQueues
 
 #POC####################################################
 poc1MIncs:
@@ -188,18 +188,26 @@ cleanOrSets:
 hybridQueue: src/Queue/hybridQueue.cc 
 	$(CC)  $(BOOST) src/Queue/hybridQueue.cc -o hybridQueue $(BOOSTP)
 
-benchHybridQueue:
-	./hybridQueue ${THREADS} > output/Queue/hybridQueue.txt
-
 syncQueue: src/Queue/syncQueue.cc 
 	$(CC)  $(BOOST) src/Queue/syncQueue.cc -o syncQueue $(BOOSTP)
+
+lockFreeQueue: src/Queue/lockFreeQueue.cc 
+	$(CC)  $(BOOST) src/Queue/lockFreeQueue.cc -o lockFreeQueue $(BOOSTP)
+
+benchHybridQueue:
+	./hybridQueue ${THREADS} > output/Queue/hybridQueue.txt
 
 benchSyncQueue:
 	./syncQueue ${THREADS} > output/Queue/syncQueue.txt
 
-queues: hybridQueue syncQueue
+benchLockFreeQueue:
+	./lockFreeQueue ${THREADS} > output/Queue/lockFreeQueue.txt
 
-benchQueues: benchHybridQueue benchSyncQueue
+queues: hybridQueue syncQueue lockFreeQueue
+
+benchQueues: benchHybridQueue benchSyncQueue benchLockFreeQueue
 
 cleanQueues:
-	rm hybridQueue syncQueue
+	rm hybridQueue syncQueue lockFreeQueue
+
+#E-VOTE#########################################################

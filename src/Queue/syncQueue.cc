@@ -4,8 +4,8 @@
 #include <boost/thread/tss.hpp>
 #include <atomic>
 
-#define LOOP 100000
-#define BENCH_RUNS 3
+#define LOOP 1000000
+#define BENCH_RUNS 10
 #define EMPTY_QUEUE -999
 
 using namespace std;
