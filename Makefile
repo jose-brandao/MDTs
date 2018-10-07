@@ -8,7 +8,7 @@ all: poc threadLocal pCounters crdts gBags orSets queues eVotes
 
 benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts benchGBags benchOrSets benchQueues benchEVotes
 
-clean: cleanExperiments cleanThreadLocal cleanPCounters cleanCrdts cleanGBags cleanOrSets cleanQueues cleanEVotes
+cleanAll: cleanPoc cleanThreadLocal cleanCrdts cleanPCounters cleanGBags cleanOrSets cleanQueues cleanEVotes
 
 #POC####################################################
 poc1MIncs:

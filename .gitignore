@@ -32,9 +32,34 @@
 *.app
 
 # Compiled code
-agreggationCounterAtomic
-agreggationCounterAtomicHybrid
+boostThreadLocal
+counterArray
+counterMap
+eVoteHybrid
+eVoteSync
+gBag
+gBagRWLocks
+gBagv2
+hybridQueue
+lockFreeQueue
+manualThreadLocal
+orSet
+orSetSync
+orSetSyncDividedWork
+orSetv2
+orSetv2RWLocks
+orSetv2RWLocksDividedWork
+pCounterAtomic
+pCounterHybrid
+pCounterHybridv2
+pnCounter
+poc1MIncs
+poc24Threads
+standardThreadLocal
 syncCounter
+syncGBag
+syncQueue
+
 
 *.txt
 .vscode/
