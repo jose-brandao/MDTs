@@ -4,11 +4,11 @@ FLAGS = -std=c++11 -ferror-limit=2
 BOOST = -std=c++14 -O3
 BOOSTP = -lboost_system -lboost_filesystem -lboost_thread-mt
 
-all: poc threadLocal pCounters crdts gBags orSets queues
+all: poc threadLocal pCounters crdts gBags orSets queues eVotes
 
-benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts benchGBags benchOrSets benchQueues
+benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts benchGBags benchOrSets benchQueues benchEVotes
 
-clean: cleanExperiments cleanThreadLocal cleanPCounters cleanCrdts cleanGBags cleanOrSets cleanQueues
+clean: cleanExperiments cleanThreadLocal cleanPCounters cleanCrdts cleanGBags cleanOrSets cleanQueues cleanEVotes
 
 #POC####################################################
 poc1MIncs:
@@ -211,3 +211,22 @@ cleanQueues:
 	rm hybridQueue syncQueue lockFreeQueue
 
 #E-VOTE#########################################################
+
+eVoteHybrid: src/E-Vote/eVoteHybrid.cc 
+	$(CC)  $(BOOST) src/E-Vote/eVoteHybrid.cc -o eVoteHybrid $(BOOSTP)
+
+eVoteSync: src/E-Vote/eVoteSync.cc 
+	$(CC)  $(BOOST) src/E-Vote/eVoteSync.cc -o eVoteSync $(BOOSTP)
+
+benchEVoteHybrid:
+	./eVoteHybrid ${THREADS} > output/E-Vote/eVoteHybrid.txt
+
+benchEVoteSync:
+	./eVoteSync ${THREADS} > output/E-Vote/eVoteSync.txt
+
+eVotes: eVoteHybrid eVoteSync
+
+benchEVotes: benchEVoteHybrid benchEVoteSync
+
+cleanEVotes:
+	rm eVoteHybrid eVoteSync
