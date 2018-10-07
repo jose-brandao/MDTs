@@ -1,9 +1,0 @@
-***************SYNCFREQ: 1 ***************
-THREAD NUMBER: 1
-RUN: 0
-RUN: 1
-FINAL: 1000000.000000
-3752542,1
-THREAD NUMBER: 2
-RUN: 0
-RUN: 1
