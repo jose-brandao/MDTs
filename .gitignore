@@ -36,3 +36,6 @@ agreggationCounterAtomicHybrid
 syncCounter
 .txt
 .vscode/
+
+output/E-Vote/*
+output/G-Bag/*
