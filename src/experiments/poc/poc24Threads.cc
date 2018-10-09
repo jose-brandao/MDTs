@@ -5,7 +5,7 @@
 #include <boost/thread/tss.hpp>
 
 #define NTHREADS 24
-#define BENCH_RUNS 10
+#define BENCH_RUNS 5
 
 using namespace std;
 

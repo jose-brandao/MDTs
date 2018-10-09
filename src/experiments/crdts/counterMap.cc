@@ -7,9 +7,9 @@
 
 using namespace std;
 #define MAXTHREADS 100
-#define TARGET 50000000
-#define LOOP 200000000
-#define BENCH_RUNS 10
+#define TARGET 500000
+#define LOOP 3000000
+#define BENCH_RUNS 5
 
 
 class ThreadId{

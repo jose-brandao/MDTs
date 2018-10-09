@@ -6,9 +6,10 @@
 #include <boost/graph/graphviz.hpp>
 #include <list>
 #include <tuple>
+#include <atomic>
 
 #define LOOP 100000
-#define BENCH_RUNS 3
+#define BENCH_RUNS 5
 
 using namespace std;
 using namespace boost;

@@ -5,7 +5,7 @@
 #include <atomic>
 
 #define LOOP 1000000
-#define BENCH_RUNS 10
+#define BENCH_RUNS 5
 #define EMPTY_QUEUE -999
 
 using namespace std;
