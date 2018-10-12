@@ -7,8 +7,8 @@
 #include <mutex>
 
 #define BENCH_RUNS 5
-#define DURATION_MILLIS 2*60*1000
-#define THRESHOLD_MILLIS 1*60*1000
+#define DURATION_MILLIS 1*60*1000
+#define THRESHOLD_MILLIS 30*1000
 
 using namespace std;
 

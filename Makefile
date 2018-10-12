@@ -10,6 +10,8 @@ benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts benchGBags benchOr
 
 benchPart2: benchCrdts benchGBags benchOrSets benchQueues benchEVotes
 
+benchPart3: benchQueues benchEVotes
+
 cleanAll: cleanPoc cleanThreadLocal cleanCrdts cleanPCounters cleanGBags cleanOrSets cleanQueues cleanEVotes
 
 #POC####################################################

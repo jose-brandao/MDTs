@@ -3,7 +3,7 @@
 #include <thread>
 #include <iostream>
 
-#define LOOP 1000000
+#define LOOP 500000
 #define BENCH_RUNS 5
 
 using namespace std;
