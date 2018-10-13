@@ -31,13 +31,11 @@ private:
 void voteClose(){
     boost::this_thread::sleep(boost::posix_time::milliseconds(DURATION_MILLIS));
     globalCanVote=false;
-    //cout << "Time to vote ended" << endl;
  }
 
 void activateSwitch(){
     boost::this_thread::sleep(boost::posix_time::milliseconds(THRESHOLD_MILLIS));
     globalSwitchOn=true;
-    //cout << "Switch activated" << endl;
  }
 
  void timeWriter(){
@@ -107,7 +105,7 @@ public:
   }
 
   void strongVote(int id){ //strongUpdate
-      if(id < (candidateNumber)) globalCandidates[id]++;
+    if(id < (candidateNumber)) globalCandidates[id]++;
   }
 
   void vote(int id){
@@ -131,6 +129,7 @@ public:
     //reseting thread local state
     localCandidates.reset(new std::vector<int>(candidateNumber));
 
+    if(globalSwitchOn) *localSwitchOn=true;
     if(!globalCanVote) *localCanVote=false;
   }
 
@@ -235,17 +234,10 @@ void workHybrid(int syncFreqIndex){
       merge=true;
     }
     
-    if(merge && (!mdt.getLocalSwitchOn()) ){
-      if(mdt.getGlobalSwitchOn()) mdt.setLocalSwitchOn(true);
+    if(merge){
       mdt.merge();
       merge=false;  
     }
-
-    if(merge && mdt.getLocalSwitchOn()){
-      if(!(mdt.getCanVote())) mdt.setLocalCanVote(false);
-      merge=false;
-    }
-
   }
 
   mdt.merge();
