@@ -211,7 +211,7 @@ eVote mdt(5);
 //weakPolls = 3 sec
 
 vector<int> NTHREADS;
-int SYNCFREQ [6] = {100,300,700,1500,3000,6000};
+int SYNCFREQ [6] = {1,8,64,512,4096,32768};
 
 void workHybrid(int syncFreqIndex){
 
