@@ -6,7 +6,7 @@
 #include <array>
 #include <mutex>
 
-#define BENCH_RUNS 2
+#define BENCH_RUNS 5
 #define DURATION_MILLIS 10*1000
 #define THRESHOLD_MILLIS 5*1000
 
@@ -39,7 +39,7 @@ void activateSwitch(){
  }
 
  void timeWriter(){
-    while(mergeTimeMillis <= DURATION_MILLIS){
+    while(mergeTimeMillis <= DURATION_MILLIS + 6000){
       boost::this_thread::sleep(boost::posix_time::milliseconds(100));
       mergeTimeMillis = mergeTimeMillis + 100;
     }
@@ -264,7 +264,7 @@ void benchmarkPerFreq(int syncFreqIndex){
 
         throughs.push_back(acVotes/(DURATION_MILLIS/1000));
 
-        sleep(3); //if we don't wait here, threads lauched on reset will delay some how
+        sleep(7); //if we don't wait here, threads lauched on reset will delay some how
         mdt.reset();
       }
 
