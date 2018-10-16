@@ -6,9 +6,9 @@
 #include <array>
 #include <mutex>
 
-#define BENCH_RUNS 5
-#define DURATION_MILLIS 1*60*1000
-#define THRESHOLD_MILLIS 30*1000
+#define BENCH_RUNS 2
+#define DURATION_MILLIS 10*1000
+#define THRESHOLD_MILLIS 5*1000
 
 using namespace std;
 
@@ -34,7 +34,7 @@ void voteClose(){
  }
 
 void activateSwitch(){
-    boost::this_thread::sleep(boost::posix_time::milliseconds(THRESHOLD_MILLIS));
+    boost::this_thread::sleep(boost::posix_time::milliseconds(THRESHOLD_MILLIS));    
     globalSwitchOn=true;
  }
 
@@ -129,8 +129,11 @@ public:
     //reseting thread local state
     localCandidates.reset(new std::vector<int>(candidateNumber));
 
-    if(globalSwitchOn) *localSwitchOn=true;
-    if(!globalCanVote) *localCanVote=false;
+    if(globalSwitchOn && !(*localSwitchOn)) *localSwitchOn=true;
+    
+    if(!globalCanVote) {
+      *localCanVote=false;
+    }
   }
 
   std::vector<int> weakResults(){ //weakRead
@@ -211,10 +214,9 @@ eVote mdt(5);
 //weakPolls = 3 sec
 
 vector<int> NTHREADS;
-int SYNCFREQ [6] = {1,8,64,512,4096,32768};
+int SYNCFREQ [6] = {100,300,700,1500,3000,6000};
 
 void workHybrid(int syncFreqIndex){
-
   mdt.init();
 
   int auxTime = 0;
@@ -231,12 +233,7 @@ void workHybrid(int syncFreqIndex){
     auxTime = mdt.getMergeTime();
     if((auxTime%SYNCFREQ[syncFreqIndex]==0) && auxTime!=lastTime ) {
       lastTime = auxTime;
-      merge=true;
-    }
-    
-    if(merge){
       mdt.merge();
-      merge=false;  
     }
   }
 
@@ -267,7 +264,7 @@ void benchmarkPerFreq(int syncFreqIndex){
 
         throughs.push_back(acVotes/(DURATION_MILLIS/1000));
 
-        sleep(1); //if we don't wait here, threads lauched on reset will delay some how
+        sleep(3); //if we don't wait here, threads lauched on reset will delay some how
         mdt.reset();
       }
 
