@@ -51,7 +51,7 @@ public:
     *lcount = 0; //resetting thread local state
   }
 
-  V syncInc(){
+  V atomicInc()(){
     V oldValue = gcount.load();
     V newValue;
 
@@ -93,11 +93,11 @@ vector<int> NTHREADS;
 int SYNCFREQ [6] = {1,8,64,512,4096,32768};
 boost::condition_variable cond;
 boost::mutex mut;
-int sthreads = 0;
+int thresholdThreadNumber = 0;
 
 void work(int syncFreqIndex, int nThreadsIndex){
   static mutex m;
-  bool cswitch = false;
+  bool switchToStrong = false;
 
   mdt.init(); 
   mdt.merge();
@@ -105,7 +105,7 @@ void work(int syncFreqIndex, int nThreadsIndex){
   int threshold = TARGET - ((NTHREADS[nThreadsIndex]) * SYNCFREQ[syncFreqIndex]);
 
   for (int i=0; i < LOOP; i++){
-    if(!cswitch){
+    if(!switchToStrong){
       if(i%SYNCFREQ[syncFreqIndex] == 1){ 
         mdt.merge();
       }
@@ -114,16 +114,16 @@ void work(int syncFreqIndex, int nThreadsIndex){
         mdt.merge();
 
         mut.lock();
-        sthreads++;
-        if(sthreads==NTHREADS[nThreadsIndex]) cond.notify_all();
+        thresholdThreadNumber++;
+        if(thresholdThreadNumber==NTHREADS[nThreadsIndex]) cond.notify_all();
         mut.unlock();
 
         boost::unique_lock<boost::mutex> lock(mut);
-        while(sthreads < NTHREADS[nThreadsIndex]){
+        while(thresholdThreadNumber < NTHREADS[nThreadsIndex]){
             cond.wait(lock);
         }
 
-        cswitch = true;
+        switchToStrong = true;
         continue;
       }
 
@@ -135,7 +135,7 @@ void work(int syncFreqIndex, int nThreadsIndex){
 
     }
     else{
-      if (mdt.syncInc() >= TARGET){
+      if (mdt.atomicInc()() >= TARGET){
         break;
       }
     }
@@ -154,7 +154,7 @@ void benchmarkPerFreq(int syncFreqIndex){
       for(int i= 0; i< BENCH_RUNS; i++){
         steady_clock::time_point t1 = steady_clock::now();
 
-        sthreads = 0;
+        thresholdThreadNumber = 0;
         boost::thread_group threads;
         for (int a=0; a < NTHREADS[k]; a++){ 
           threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex),boost::cref(k)));

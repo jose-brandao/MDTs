@@ -9,10 +9,10 @@ set style line 80 lt rgb "#808080"
 # Line style for grid
 set style line 81 lt 0  # dashed
 set style line 81 lt rgb "#808080"  # grey
-set ytics 4
+#set ytics 4
 
 #set logscale x 50
-#set logscale y 10
+#set logscale y 2
 
 set grid back linestyle 81
 set border 3 back linestyle 80 # Remove border on top and right.  These
@@ -36,13 +36,13 @@ set style line 8 pt 8
 set pointsize 0.7
 
 set output outputname
-set xlabel "ops/sec"
-set ylabel "threads"
+set ylabel "ops/sec"
+set xlabel "threads"
 
-set key right bottom
+set key left top
 
-set xrange [0:*]
-set yrange [*:36]
+set yrange [0:*]
+set xrange [*:36]
 
 
 # Titles with spaces are not allowed

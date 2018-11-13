@@ -16,7 +16,7 @@ atomic<unsigned int> c;
 vector<int> NTHREADS;
 
 int inc(){
-	unsigned int oldValue = c.load();
+	  unsigned int oldValue = c.load();
     unsigned int newValue;
 
     do{
@@ -65,7 +65,8 @@ void benchmark(){
         times.push_back(ti.count());
         counters.push_back(c);
         throughs.push_back(c/ti.count());
-
+        
+        cout << "VALUE: " << c << endl;
         c=0;
       }
 

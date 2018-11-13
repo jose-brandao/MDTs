@@ -138,7 +138,7 @@ benchSyncGBag:
 
 gBags: gBag gBagRWLocks syncGBag
 
-benchGBags: benchGBag benchGBagRWLocks benchGBag
+benchGBags: benchGBag benchGBagRWLocks benchSyncGBag
 
 cleanGBags:
 	rm gBag gBagRWLocks syncGBag

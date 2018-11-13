@@ -12,7 +12,7 @@ set style line 81 lt rgb "#808080"  # grey
 #set ytics 4
 
 #set logscale x 50
-#set logscale y 2
+set logscale y 10
 
 set grid back linestyle 81
 set border 3 back linestyle 80 # Remove border on top and right.  These
@@ -39,10 +39,10 @@ set output outputname
 set ylabel "ops/sec"
 set xlabel "threads"
 
-set key left top
+set key right center
 
-set yrange [0:*]
-set xrange [*:36]
+set yrange [17000:*]
+set xrange [*:40]
 
 
 # Titles with spaces are not allowed
