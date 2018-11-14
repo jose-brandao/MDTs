@@ -95,7 +95,7 @@ void work(){
   for (int i=0; i < LOOP; i++){
     mdt.strongAdd(i);
     
-    if(i%10000 == 0){
+    if(i%50000 == 0){
       mdt.strongLookup(LOOP/2);
     }
   }

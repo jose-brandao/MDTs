@@ -24,7 +24,7 @@ class gBag {
     //thread-local state
     boost::thread_specific_ptr<node<V> *> localHead;
     boost::thread_specific_ptr<node<V> **> localGraft;
-    boost::thread_specific_ptr<bool> last;
+    boost::thread_specific_ptr<bool> hasValuesLocally;
 
     //class auxiliars
     mutable boost::shared_mutex m;
@@ -33,7 +33,7 @@ class gBag {
     void init(){
         localHead.reset(new node<V>*); 
         localGraft.reset(new node<V>**);
-        last.reset(new bool(false));
+        hasValuesLocally.reset(new bool(false));
 
         *localHead = NULL;
         *localGraft = NULL;
@@ -53,7 +53,7 @@ class gBag {
     }
 
     bool strongLookup(const V value) {
-        if(*last && searchLocally(value)) return true;
+        if(*hasValuesLocally && searchLocally(value)) return true;
 
 
         boost::shared_lock<boost::shared_mutex> lock(m);
@@ -73,9 +73,9 @@ class gBag {
         tempNode->payload = value;
         tempNode->next = *localHead;
         
-        if (*last==false){
+        if (*hasValuesLocally==false){
             *localGraft = &(tempNode->next);
-            *last = true;
+            *hasValuesLocally = true;
         }
         *localHead = tempNode;
     }
@@ -90,13 +90,13 @@ class gBag {
     }
 
     void merge() {
-        if(*last) { //because we may not have a weak add
+        if(*hasValuesLocally) { //because we may not have a weak add
 
           boost::unique_lock<boost::shared_mutex> lock(m); // Protect global head accesses 
           **localGraft=globalHead; //*localGraft is &tail->next(node*), we are saying tail will point to the global head (assign by reference)
           globalHead=*localHead;
 
-          *last=false;
+          *hasValuesLocally=false;
           *localHead=NULL;          
         }
     }
@@ -164,7 +164,7 @@ void work(int syncFreqIndex){
     }
     mdt.weakAdd(i);
     
-    if(i%10000 == 0){
+    if(i%50000 == 0){
       mdt.strongLookup(LOOP/2);
     }
 
