@@ -51,7 +51,7 @@ public:
     *lcount = 0; //resetting thread local state
   }
 
-  V atomicInc()(){
+  V atomicInc(){
     V oldValue = gcount.load();
     V newValue;
 
@@ -135,7 +135,7 @@ void work(int syncFreqIndex, int nThreadsIndex){
 
     }
     else{
-      if (mdt.atomicInc()() >= TARGET){
+      if (mdt.atomicInc() >= TARGET){
         break;
       }
     }
