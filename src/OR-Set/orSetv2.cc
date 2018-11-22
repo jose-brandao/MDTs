@@ -8,7 +8,7 @@
 #include <tuple>
 
 #define LOOP 1000000
-#define BENCH_RUNS 5
+#define BENCH_RUNS 10
 
 using namespace std;
 using namespace boost;
@@ -94,7 +94,7 @@ void removeFromLocalAdded(T val){
 }
 
 void weakAddHelper(T val, node<T>* possibleParent, int vid){
-    //start seaching from the possible parent
+    //start seaching starting from the possible parent
     node<T>* n = searchNode(possibleParent, val);
     if(n==NULL){
         if (possibleParent != NULL) insert(val, possibleParent, vid);
@@ -322,7 +322,7 @@ void weakAdd(T val){
 
 orSet<int> mdt;
 vector<int> NTHREADS;
-int SYNCFREQ [6] = {1,8,64,512,4096,32768};
+int SYNCFREQ [8] = {1,8,64,128,256,512,4096,32768};
 void work(int syncFreqIndex){
   mdt.init();
   mdt.merge();
@@ -338,7 +338,7 @@ void work(int syncFreqIndex){
 
     mdt.weakAdd(i);
   
-    if(i%10000 == 0){
+    if(i%50000 == 0){
       mdt.strongLookup(LOOP/2);
     }
 
@@ -425,7 +425,7 @@ int main(int argc, char** argv){
       NTHREADS.push_back(atoi(argv[i]));
     }
 
-    for(int i=0; i<6;i++){
+    for(int i=0; i<8;i++){
         cout << "***************SYNCFREQ: " << SYNCFREQ[i] << " ***************" << endl;
         benchmarkPerFreq(i);
         cout << endl;

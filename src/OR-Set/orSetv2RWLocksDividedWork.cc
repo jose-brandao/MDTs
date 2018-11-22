@@ -315,7 +315,7 @@ orSet<int> mdt;
 vector<int> NTHREADS;
 std::atomic<int> threadCount;
 std::mutex m;
-int SYNCFREQ [6] = {1,8,64,512,4096,32768};
+int SYNCFREQ [8] = {1,8,64,128,256,512,4096,32768};
 void work(int syncFreqIndex, int operationsPerThread){
   threadCount++;
   int localCount = threadCount;
@@ -336,7 +336,7 @@ void work(int syncFreqIndex, int operationsPerThread){
 
     mdt.weakAdd(i);
   
-    if(i%10000 == 0){
+    if(i%50000 == 0){
       mdt.strongLookup(LOOP/2);
     }
 
@@ -425,7 +425,7 @@ int main(int argc, char** argv){
       NTHREADS.push_back(atoi(argv[i]));
     }
 
-    for(int i=0; i<6;i++){
+    for(int i=0; i<8;i++){
         cout << "***************SYNCFREQ: " << SYNCFREQ[i] << " ***************" << endl;
         benchmarkPerFreq(i);
         cout << endl;
