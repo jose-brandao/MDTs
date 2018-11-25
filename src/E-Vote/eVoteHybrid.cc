@@ -39,9 +39,9 @@ void activateSwitch(){
  }
 
  void timeWriter(){
-    while(mergeTimeMillis <= DURATION_MILLIS + 6000){
-      boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-      mergeTimeMillis = mergeTimeMillis + 100;
+    while(mergeTimeMillis <= DURATION_MILLIS + 6200){
+      boost::this_thread::sleep(boost::posix_time::milliseconds(10));
+      mergeTimeMillis = mergeTimeMillis + 10;
     }
  }
 
@@ -208,20 +208,15 @@ public:
 };
 
 eVote mdt(5);
-//voteTime = 12s 
-//switchTime = 9sec
-//mergeFreq = 1 sec
-//weakPolls = 3 sec
 
 vector<int> NTHREADS;
 int SYNCFREQ [6] = {100,300,700,1500,3000,6000};
 
-void workHybrid(int syncFreqIndex){
+void workHybrid(int syncFreqIndex, int syncFreqLag){
   mdt.init();
 
   int auxTime = 0;
   int lastTime = 0;
-  bool merge = false;
 
   srand(time(NULL)); 
 
@@ -231,7 +226,7 @@ void workHybrid(int syncFreqIndex){
 
     //to ensure only one merge per syncfreq
     auxTime = mdt.getMergeTime();
-    if((auxTime%SYNCFREQ[syncFreqIndex]==0) && auxTime!=lastTime ) {
+    if((auxTime%(SYNCFREQ[syncFreqIndex] + syncFreqLag)==0) && auxTime!=lastTime ) {
       lastTime = auxTime;
       mdt.merge();
     }
@@ -250,8 +245,10 @@ void benchmarkPerFreq(int syncFreqIndex){
 
       for(int i = 0; i < BENCH_RUNS; i++){
         boost::thread_group threads;
+        int syncFreqLag = 0;
         for (int a=0; a < NTHREADS[k]; a++){
-          threads.create_thread(boost::bind(workHybrid, boost::cref(syncFreqIndex)));
+          threads.create_thread(boost::bind(workHybrid, boost::cref(syncFreqIndex), boost::cref(syncFreqLag)));
+          syncFreqLag += 10;
         }
         // Work baby threads, work ...
         threads.join_all();

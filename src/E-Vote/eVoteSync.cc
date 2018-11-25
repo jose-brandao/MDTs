@@ -42,8 +42,8 @@ void activateSwitch(){
 
  void timeWriter(){
     while(mergeTimeMillis <= DURATION_MILLIS){
-      boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-      mergeTimeMillis = mergeTimeMillis + 100;
+      boost::this_thread::sleep(boost::posix_time::milliseconds(10));
+      mergeTimeMillis = mergeTimeMillis + 10;
     }
  }
 
