@@ -4,8 +4,8 @@
 #include <boost/thread/tss.hpp>
 #include <tuple>
 
-#define LOOP 1000000
-#define BENCH_RUNS 5
+#define LOOP 100000
+#define BENCH_RUNS 2
 
 using namespace std;
 
@@ -158,20 +158,26 @@ class gBag {
 gBag<int> mdt;
 vector<int> NTHREADS;
 int SYNCFREQ [6] = {1,8,64,512,4096,32768};
-void work(int syncFreqIndex){
+std::atomic<int> threadCount;
+void work(int syncFreqIndex, int operationsPerThread){
+  threadCount++;
+  int localCount = threadCount;
+  int startNumber = operationsPerThread * (localCount-1);
+  int endNumber = startNumber + operationsPerThread;
+
   mdt.init();
   mdt.merge();
 
 
-  for (int i=0; i < LOOP; i++){
-    if(i%SYNCFREQ[syncFreqIndex] == 1){
-      mdt.merge();
-    }
+  for (int i=startNumber; i < endNumber; i++){
+    // if(i%SYNCFREQ[syncFreqIndex] == 1){
+    //   mdt.merge();
+    // }
     mdt.weakAdd(i);
     
-    if(i%50000 == 0){
-      mdt.strongLookup(LOOP/2);
-    }
+    // if(i%50000 == 0){
+    //   mdt.strongLookup(LOOP/2);
+    // }
 
     if(i%SYNCFREQ[syncFreqIndex] == 0){
       mdt.merge();
@@ -190,11 +196,13 @@ void benchmarkPerFreq(int syncFreqIndex){
         steady_clock::time_point t1 = steady_clock::now();
 
         boost::thread_group threads;
+        int operationsPerThread = LOOP/NTHREADS[k];
         for (int a=0; a < NTHREADS[k]; a++){
-          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex)));
+          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex), boost::cref(operationsPerThread)));
         }
 
         threads.join_all();
+        threadCount=0;
 
         steady_clock::time_point t2 = steady_clock::now();
 
