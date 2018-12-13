@@ -39,7 +39,7 @@ set output outputname
 set ylabel "ops/sec"
 set xlabel "threads"
 
-set key left top
+set key right top
 
 set yrange [0:*]
 set xrange [*:36]

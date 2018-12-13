@@ -4,8 +4,8 @@
 #include <boost/thread/tss.hpp>
 #include <tuple>
 
-#define LOOP 100000
-#define BENCH_RUNS 2
+#define LOOP 1000000
+#define BENCH_RUNS 5
 
 using namespace std;
 
@@ -89,19 +89,18 @@ class gBag {
         tempNode->next = globalHead;
         globalHead = tempNode;
         m.unlock();
-
     }
 
     void merge() {
         if(*hasValuesLocally) { //because we may not have a weak add
 
-          m.lock(); // Protect global head accesses 
-          **localGraft=globalHead; //*localGraft is &tail->next(node*), we are saying tail will point to the global head (assign by reference)
-          globalHead=*localHead;
-          m.unlock();
+            m.lock(); // Protect global head accesses 
+            **localGraft=globalHead; //*localGraft is &tail->next(node*), we are saying tail will point to the global head (assign by reference)
+            globalHead=*localHead;
+            m.unlock();
 
-          *hasValuesLocally=false;
-          *localHead=NULL;          
+            *hasValuesLocally=false;
+            *localHead=NULL;                              
         }
     }
 
@@ -170,19 +169,21 @@ void work(int syncFreqIndex, int operationsPerThread){
 
 
   for (int i=startNumber; i < endNumber; i++){
-    // if(i%SYNCFREQ[syncFreqIndex] == 1){
-    //   mdt.merge();
-    // }
+    if(i%SYNCFREQ[syncFreqIndex] == 1){
+      mdt.merge();
+    }
     mdt.weakAdd(i);
     
-    // if(i%50000 == 0){
-    //   mdt.strongLookup(LOOP/2);
-    // }
+    if(i%50000 == 0){
+      mdt.strongLookup(LOOP/2);
+    }
 
     if(i%SYNCFREQ[syncFreqIndex] == 0){
       mdt.merge();
     }
+    
   }
+  mdt.merge();
 }
 
 void benchmarkPerFreq(int syncFreqIndex){
@@ -214,7 +215,7 @@ void benchmarkPerFreq(int syncFreqIndex){
 
         mdt.reset();
       }
-
+     
       double sumTimes = 0;
       for(double t: times){
         sumTimes += t;
@@ -228,7 +229,6 @@ void benchmarkPerFreq(int syncFreqIndex){
         sumCounters += c;
       }
       double finalElemCount = (int)(sumCounters/elementCount.size());
-
 
       double sumThroughs = 0;
       for(double th: throughs){

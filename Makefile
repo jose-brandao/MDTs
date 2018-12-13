@@ -8,11 +8,9 @@ all: poc threadLocal pCounters crdts gBags orSets queues eVotes
 
 benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts benchGBags benchOrSets benchQueues benchEVotes
 
-benchPart2: benchCrdts benchGBags benchOrSets benchQueues benchEVotes
+finalIHope: syncGBag gBag gBagSpinLock eVotes
 
-benchPart3: benchQueues benchEVotes
-
-benchPart4: benchGBags benchOrSets
+benchFinalIHope: benchSyncGBag benchGBag benchGBagSpinLock benchEVotes
 
 cleanAll: cleanPoc cleanThreadLocal cleanCrdts cleanPCounters cleanGBags cleanOrSets cleanQueues cleanEVotes
 
@@ -123,6 +121,9 @@ pnCounter: src/PN-Counter/pnCounter.cc
 gBag: src/G-Bag/gBag.cc 
 	$(CC)  $(BOOST) src/G-Bag/gBag.cc -o gBag $(BOOSTP)
 
+gBagSpinLock: src/G-Bag/gBagSpinLock.cc 
+	$(CC)  $(BOOST) src/G-Bag/gBagSpinLock.cc -o gBagSpinLock $(BOOSTP)
+
 gBagRWLocks: src/G-Bag/gBagRWLocks.cc 
 	$(CC)  $(BOOST) src/G-Bag/gBagRWLocks.cc -o gBagRWLocks $(BOOSTP)
 
@@ -132,18 +133,21 @@ syncGBag: src/G-Bag/syncGBag.cc
 benchGBag:
 	./gBag ${THREADS} > output/G-Bag/gBag.txt
 
+benchGBagSpinLock:
+	./gBagSpinLock ${THREADS} > output/G-Bag/gBagSpinLock.txt
+
 benchGBagRWLocks:
 	./gBagRWLocks ${THREADS} > output/G-Bag/gBagRWLocks.txt
 
 benchSyncGBag:
 	./syncGBag ${THREADS} > output/G-Bag/syncGBag.txt
 
-gBags: gBag gBagRWLocks syncGBag
+gBags: gBag gBagRWLocks syncGBag gBagSpinLock
 
-benchGBags: benchGBag benchGBagRWLocks benchSyncGBag
+benchGBags: benchGBag benchGBagRWLocks benchSyncGBag benchGBagSpinLock
 
 cleanGBags:
-	rm gBag gBagRWLocks syncGBag
+	rm gBag gBagRWLocks syncGBag gBagSpinLock
 
 #OR-SET#########################################################
 orSet: src/OR-Set/orSet.cc 
