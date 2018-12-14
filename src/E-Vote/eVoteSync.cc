@@ -274,7 +274,7 @@ void benchmarkPerFreq(){
       double finalThroughs = sumThroughs/throughs.size();
       //cout << "troughput: " << finalThroughs << endl << endl;
 
-      cout << (int)finalThroughs << "," << NTHREADS[k] << endl;
+      cout << NTHREADS[k] << "," << (int)finalThroughs << endl;
     }
 }
   

@@ -6,9 +6,9 @@
 #include <array>
 #include <mutex>
 
-#define BENCH_RUNS 5
-#define DURATION_MILLIS 10*1000
-#define THRESHOLD_MILLIS 5*1000
+#define BENCH_RUNS 4
+#define DURATION_MILLIS 8*1000
+#define THRESHOLD_MILLIS 4*1000
 
 using namespace std;
 
@@ -261,7 +261,7 @@ void benchmarkPerFreq(int syncFreqIndex){
 
         throughs.push_back(acVotes/(DURATION_MILLIS/1000));
 
-        sleep(7); //if we don't wait here, threads lauched on reset will delay some how
+        sleep(16); //if we don't wait here, threads lauched on reset will delay some how
         mdt.reset();
       }
 
@@ -282,7 +282,7 @@ void benchmarkPerFreq(int syncFreqIndex){
       double finalThroughs = sumThroughs/throughs.size();
       //cout << "troughput: " << finalThroughs << endl << endl;
 
-      cout << (int)finalThroughs << "," << NTHREADS[k] << endl;
+      cout << NTHREADS[k] << "," << (int)finalThroughs << endl;
     }
 }
   

@@ -236,7 +236,11 @@ void benchmarkPerFreq(int syncFreqIndex){
       }
       double finalThroughs = sumThroughs/throughs.size();
 
-      cout << (int)finalElemCount << "," << (int)finalThroughs << "," << NTHREADS[k] << endl;
+    //   cout << "FINAL TIME: " << finalTime << endl;
+    //   cout << (int)finalElemCount << "," << (int)finalThroughs << "," << NTHREADS[k] << endl;
+    //   cout << endl;
+
+      cout << NTHREADS[k] << "," << (int)finalThroughs << endl;
     }
 }
 
