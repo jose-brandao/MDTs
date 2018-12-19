@@ -8,9 +8,9 @@ all: poc threadLocal pCounters crdts gBags orSets queues eVotes
 
 benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts benchGBags benchOrSets benchQueues benchEVotes
 
-finalIHope: syncGBag gBag gBagSpinLock eVotes
+finalIHope: syncGBag gBag gBagSpinLock eVotes orSet orSetSpinLock orSetSync
 
-benchFinalIHope: benchSyncGBag benchGBag benchGBagSpinLock benchEVotes
+benchFinalIHope: benchSyncGBag benchGBag benchGBagSpinLock benchEVotes benchOrSet benchOrSetSpinLock benchOrSetSync
 
 cleanAll: cleanPoc cleanThreadLocal cleanCrdts cleanPCounters cleanGBags cleanOrSets cleanQueues cleanEVotes
 
@@ -153,6 +153,9 @@ cleanGBags:
 orSet: src/OR-Set/orSet.cc 
 	$(CC)  $(BOOST) src/OR-Set/orSet.cc -o orSet $(BOOSTP)
 
+orSetSpinLock: src/OR-Set/orSetSpinLock.cc 
+	$(CC)  $(BOOST) src/OR-Set/orSetSpinLock.cc -o orSetSpinLock $(BOOSTP)
+
 orSetv2: src/OR-Set/orSetv2.cc 
 	$(CC)  $(BOOST) src/OR-Set/orSetv2.cc -o orSetv2 $(BOOSTP)
 
@@ -171,6 +174,9 @@ orSetSyncDividedWork: src/OR-Set/orSetSyncDividedWork.cc
 benchOrSet:
 	./orSet ${THREADS} > output/OR-Set/orSet.txt
 
+benchOrSetSpinLock:
+	./orSetSpinLock ${THREADS} > output/OR-Set/orSetSpinLock.txt
+
 benchOrSetV2:
 	./orSetv2 ${THREADS} > output/OR-Set/orSetv2.txt
 
@@ -186,12 +192,12 @@ benchOrSetSync:
 benchOrSetSyncDividedWork:
 	./orSetSyncDividedWork ${THREADS} > output/OR-Set/orSetSyncDividedWork.txt	
 
-orSets: orSet orSetv2 orSetv2RWLocks orSetv2RWLocksDividedWork orSetSync orSetSyncDividedWork
+orSets: orSet orSetSpinLock orSetv2 orSetv2RWLocks orSetv2RWLocksDividedWork orSetSync orSetSyncDividedWork
 
-benchOrSets: benchOrSet benchOrSetV2 benchOrSetv2RWLocks benchOrSetv2RWLocksDividedWork benchOrSetSync benchOrSetSyncDividedWork  
+benchOrSets: benchOrSet benchOrSetSpinLock benchOrSetV2 benchOrSetv2RWLocks benchOrSetv2RWLocksDividedWork benchOrSetSync benchOrSetSyncDividedWork  
 
 cleanOrSets:
-	rm orSet orSetv2 orSetv2RWLocks orSetv2RWLocksDividedWork orSetSync orSetSyncDividedWork
+	rm orSet orSetSpinLock orSetv2 orSetv2RWLocks orSetv2RWLocksDividedWork orSetSync orSetSyncDividedWork
 
 #QUEUES#########################################################
 

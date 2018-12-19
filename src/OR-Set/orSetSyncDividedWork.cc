@@ -7,8 +7,8 @@
 #include <list>
 #include <tuple>
 
-#define LOOP 1000000
-#define BENCH_RUNS 5
+#define LOOP 100000
+#define BENCH_RUNS 4
 
 using namespace std;
 using namespace boost;

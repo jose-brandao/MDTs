@@ -7,8 +7,8 @@
 #include <list>
 #include <tuple>
 
-#define LOOP 1000000
-#define BENCH_RUNS 10
+#define LOOP 100000
+#define BENCH_RUNS 5
 
 using namespace std;
 using namespace boost;
@@ -281,22 +281,24 @@ public:
 orSet<int> mdt;
 vector<int> NTHREADS;
 int SYNCFREQ [8] = {1,8,64,128,256,512,4096,32768};
-void work(int syncFreqIndex){
+std::atomic<int> threadCount;
+void work(int syncFreqIndex, int operationsPerThread){
+  threadCount++;
+  int localCount = threadCount;
+  int startNumber = operationsPerThread * (localCount-1);
+  int endNumber = startNumber + operationsPerThread;
+
   mdt.init();
   mdt.merge();
 
-  for (int i=0; i < LOOP; i++){
-    if(i%SYNCFREQ[syncFreqIndex] == 1){
-      mdt.merge();
-    }
-
+  for (int i=startNumber; i < endNumber; i++){
     if(i%10==2){ 
       mdt.weakRemove(i-1);
     }
 
     mdt.weakAdd(i);
   
-    if(i%50000 == 0){
+    if(i%5000 == 0){
       mdt.strongLookup(LOOP/2);
     }
 
@@ -333,22 +335,23 @@ void benchmarkPerFreq(int syncFreqIndex){
         steady_clock::time_point t1 = steady_clock::now();
 
         boost::thread_group threads;
+        int operationsPerThread = LOOP/NTHREADS[k];
         for (int a=0; a < NTHREADS[k]; a++){
-          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex)));
+          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex), boost::cref(operationsPerThread)));
         }
-
         threads.join_all();
-
         steady_clock::time_point t2 = steady_clock::now();
+        
+        threadCount=0;
+
 
         duration<double> ti = duration_cast<duration<double>>(t2 - t1);
 
         times.push_back(ti.count());
+        // cout << "TIME: " << ti.count() << endl;
 
-        int globalCount = mdt.globalCountMdt() * NTHREADS[k];
-
-        elementCount.push_back(globalCount);
-        throughs.push_back(globalCount/ti.count());
+        elementCount.push_back(mdt.globalCountMdt());
+        throughs.push_back(LOOP/ti.count());
 
         mdt.reset();
       }
@@ -374,7 +377,9 @@ void benchmarkPerFreq(int syncFreqIndex){
       }
       double finalThroughs = sumThroughs/throughs.size();
 
-      cout << (int)finalElemCount << "," << (int)finalThroughs << "," << NTHREADS[k] << endl;
+      // cout << (int)finalElemCount << "," << (int)finalThroughs << "," << NTHREADS[k] << endl;
+      cout << NTHREADS[k] << "," << (int)finalThroughs << endl;
+
     }
 }
 

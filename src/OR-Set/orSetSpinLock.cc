@@ -29,11 +29,11 @@ private:
 
   //thread-local state
   boost::thread_specific_ptr<int> lvid;
-  boost::thread_specific_ptr< list< pair< T, node<T>*> > > localAdd;
-  boost::thread_specific_ptr< list< pair< node<T>*, int> > > localRemove;
+  boost::thread_specific_ptr<list<T>> localAdd;
+  boost::thread_specific_ptr<list<T>> localRemove;
 
   //class auxiliars
-  boost::mutex m;
+  boost::detail::spinlock m;
 
 void insert(T val, node<T> *leaf, T vid){
   if(val < leaf->val){
@@ -84,34 +84,16 @@ node<T>* findParentNode(node<T> * leaf, T val, node<T> * parent){
 }
 
 void removeFromLocalAdded(T val){
-  typename std::list< pair<T,node<T>*> >::iterator itr = (*localAdd).begin();
+  typename std::list<T>::iterator itr = (*localAdd).begin();
   while (itr != (*localAdd).end()){ 
-    if((*itr).first == val) {
+    if((*itr) == val) {
       itr = (*localAdd).erase(itr);
     }
     else ++itr;
   }
 }
 
-void weakAddHelper(T val, node<T>* possibleParent, int vid){
-    //start seaching from the possible parent
-    node<T>* n = searchNode(possibleParent, val);
-    if(n==NULL){
-        if (possibleParent != NULL) insert(val, possibleParent, vid);
-        else insertAtRoot(val, vid); //if possibleParent null, tree is empty
-    }
-    else{     
-        //node to insert already exists, just update vinfo
-        if(get<2>((n->vinfo).front()) > 0){
-            (n->vinfo).push_front(make_tuple(vid,vid,0)); //if removed insert new vinfo at head
-        }
-        else{
-            get<1>((n->vinfo).front())= vid; //if not update last of the head
-        }
-    }
-}
-
-void strongAddHelper(T val, int vid){
+void addHelper(T val, int vid){
     //search for a node, if doesn't exist insert it. Otherwise just update
     node<T>* n = searchNode(root, val);
     if(n==NULL){
@@ -130,19 +112,7 @@ void strongAddHelper(T val, int vid){
     }
 }
 
-void weakRemoveHelper(node<T>* node, int observedLast, int vid){
-  //check if was not removed by other threads meanwhile
-  bool notConcurrentlyRemoved = get<2>((node->vinfo).front()) == 0;
-
-  //check if was not updated by other threads meanwhile(add-wins)
-  bool notConcurrentlyUpdated = get<1>((node->vinfo).front()) == observedLast;
-
-  if(notConcurrentlyRemoved && notConcurrentlyUpdated){ 
-      get<2>((node->vinfo).front()) = vid;
-  }
-}
-
-void strongRemoveHelper(T val, int vid){
+void removeHelper(T val, int vid){
     //just need to check if node is != NULL and if removed is == 0
     node<T>* n = searchNode(root, val); 
     if(n != NULL){
@@ -185,14 +155,14 @@ public:
   }
 
   void init(){
-    localAdd.reset(new list<pair<T,node<T>*>>);
-    localRemove.reset(new list<pair<node<T>*,int>>);
+    localAdd.reset(new list<T>);
+    localRemove.reset(new list<T>);
     lvid.reset(new int(gvid));
   }
 
   bool weakLookup(T val){
-    for(auto pair: *localAdd){
-      if(pair.first == val) return true;
+    for(T lval: *localAdd){  //checking on local added
+      if(lval == val) return true;
     }
 
     m.lock();
@@ -213,8 +183,8 @@ public:
   }
 
   bool strongLookup(T val){
-    for(auto pair: *localAdd){
-      if(pair.first == val) return true;
+    for(T lval: *localAdd){     //checking on local added
+      if(lval == val) return true;
     }
 
     m.lock();
@@ -233,36 +203,24 @@ public:
     return false;
   }
 
-void weakAdd(T val){
-    //finding an estimated position for the insertion
-    m.lock();
-    node<T>* parent = findParentNode(root, val, root);
-    m.unlock();
-    (*localAdd).push_front(make_pair(val, parent));
+  void weakAdd(T val){
+    (*localAdd).push_front(val);
   }
 
   void strongAdd(T val){
       m.lock();
-      strongAddHelper(val, gvid);
+      addHelper(val, gvid);
       m.unlock();
   }
 
   void weakRemove(T val){
-    m.lock();
-    node<T>* n = searchNode(root, val); 
-    
-    if(n != NULL && (get<2>((n->vinfo).front())==0)){ //only remove if we can observe it
-      int last = get<1>((n->vinfo).front());
-      (*localRemove).push_front(make_pair(n,last));
-    }  
-    m.unlock();
-  
+    (*localRemove).push_front(val);
     removeFromLocalAdded(val);
   }
 
     void strongRemove(T val){
       m.lock();
-      strongRemoveHelper(val, gvid);
+      removeHelper(val, gvid);
       m.unlock();
   }
   
@@ -271,14 +229,14 @@ void weakAdd(T val){
     int newVid = gvid+1;
 
     //merge weak adds
-    for(auto pair: *localAdd){
-        weakAddHelper(pair.first, pair.second, newVid);
+    for(T val: *localAdd){
+        addHelper(val, newVid);
     }
     (*localAdd).clear();  
 
     //merge weak removes
-    for(auto pair: *localRemove){  
-        weakRemoveHelper(pair.first, pair.second, newVid);
+    for(T val: *localRemove){  
+        removeHelper(val, newVid);
     }
     (*localRemove).clear();
 
@@ -289,7 +247,7 @@ void weakAdd(T val){
 
 
 ////////////////////////////FOR DEBUGGING/BENCHMARK PURPOSES
-  void readSet(){
+  void readSetMdt(){
     readSet(root);
   }
 
@@ -323,23 +281,24 @@ void weakAdd(T val){
 orSet<int> mdt;
 vector<int> NTHREADS;
 int SYNCFREQ [8] = {1,8,64,128,256,512,4096,32768};
-void work(int syncFreqIndex){
+std::atomic<int> threadCount;
+void work(int syncFreqIndex, int operationsPerThread){
+  threadCount++;
+  int localCount = threadCount;
+  int startNumber = operationsPerThread * (localCount-1);
+  int endNumber = startNumber + operationsPerThread;
+
   mdt.init();
   mdt.merge();
 
-  for (int i=0; i < LOOP; i++){
-    if(i%SYNCFREQ[syncFreqIndex] == 1){
-      mdt.merge();
-    }
-
+  for (int i=startNumber; i < endNumber; i++){
     if(i%10==2){ 
-      mdt.strongRemove(i-1);
+      mdt.weakRemove(i-1);
     }
 
-    // cout << "INSERI O " << i << endl;
-    mdt.strongAdd(i);
+    mdt.weakAdd(i);
   
-    if(i%50000 == 0){
+    if(i%5000 == 0){
       mdt.strongLookup(LOOP/2);
     }
 
@@ -376,22 +335,22 @@ void benchmarkPerFreq(int syncFreqIndex){
         steady_clock::time_point t1 = steady_clock::now();
 
         boost::thread_group threads;
+        int operationsPerThread = LOOP/NTHREADS[k];
         for (int a=0; a < NTHREADS[k]; a++){
-          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex)));
+          threads.create_thread(boost::bind(work, boost::cref(syncFreqIndex), boost::cref(operationsPerThread)));
         }
-
         threads.join_all();
-
         steady_clock::time_point t2 = steady_clock::now();
+        
+        threadCount=0;
+
 
         duration<double> ti = duration_cast<duration<double>>(t2 - t1);
 
         times.push_back(ti.count());
 
-        int globalCount = mdt.globalCountMdt() * NTHREADS[k];
-
-        elementCount.push_back(globalCount);
-        throughs.push_back(globalCount/ti.count());
+        elementCount.push_back(mdt.globalCountMdt());
+        throughs.push_back(LOOP/ti.count());
 
         mdt.reset();
       }
@@ -417,7 +376,9 @@ void benchmarkPerFreq(int syncFreqIndex){
       }
       double finalThroughs = sumThroughs/throughs.size();
 
-      cout << (int)finalElemCount << "," << (int)finalThroughs << "," << NTHREADS[k] << endl;
+      // cout << (int)finalElemCount << "," << (int)finalThroughs << "," << NTHREADS[k] << endl;
+      cout << NTHREADS[k] << "," << (int)finalThroughs << endl;
+
     }
 }
 
