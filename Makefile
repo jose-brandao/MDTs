@@ -8,9 +8,9 @@ all: poc threadLocal pCounters crdts gBags orSets queues eVotes
 
 benchAll: benchPoc benchThreadLocal benchPCounters benchCrdts benchGBags benchOrSets benchQueues benchEVotes
 
-finalIHope: syncGBag gBag gBagSpinLock eVotes orSet orSetSpinLock orSetSync
+finalIHope: syncGBag gBag gBagSpinLock eVotes orSet orSetSpinLock orSetSync orSetv2 orSetv2SpinLock
 
-benchFinalIHope: benchSyncGBag benchGBag benchGBagSpinLock benchEVotes benchOrSet benchOrSetSpinLock benchOrSetSync
+benchFinalIHope: benchSyncGBag benchGBag benchGBagSpinLock benchEVotes benchOrSet benchOrSetSpinLock benchOrSetSync benchOrSetV2 benchOrSetV2SpinLock
 
 cleanAll: cleanPoc cleanThreadLocal cleanCrdts cleanPCounters cleanGBags cleanOrSets cleanQueues cleanEVotes
 
@@ -159,6 +159,9 @@ orSetSpinLock: src/OR-Set/orSetSpinLock.cc
 orSetv2: src/OR-Set/orSetv2.cc 
 	$(CC)  $(BOOST) src/OR-Set/orSetv2.cc -o orSetv2 $(BOOSTP)
 
+orSetv2SpinLock: src/OR-Set/orSetv2SpinLock.cc 
+	$(CC)  $(BOOST) src/OR-Set/orSetv2SpinLock.cc -o orSetv2SpinLock $(BOOSTP)
+
 orSetv2RWLocks: src/OR-Set/orSetv2RWLocks.cc 
 	$(CC)  $(BOOST) src/OR-Set/orSetv2RWLocks.cc -o orSetv2RWLocks $(BOOSTP)
 
@@ -180,6 +183,9 @@ benchOrSetSpinLock:
 benchOrSetV2:
 	./orSetv2 ${THREADS} > output/OR-Set/orSetv2.txt
 
+benchOrSetV2SpinLock:
+	./orSetv2SpinLock ${THREADS} > output/OR-Set/orSetv2SpinLock.txt
+
 benchOrSetv2RWLocks:
 	./orSetv2RWLocks ${THREADS} > output/OR-Set/orSetv2RWLocks.txt
 
@@ -192,12 +198,12 @@ benchOrSetSync:
 benchOrSetSyncDividedWork:
 	./orSetSyncDividedWork ${THREADS} > output/OR-Set/orSetSyncDividedWork.txt	
 
-orSets: orSet orSetSpinLock orSetv2 orSetv2RWLocks orSetv2RWLocksDividedWork orSetSync orSetSyncDividedWork
+orSets: orSet orSetSpinLock orSetv2 orSetv2RWLocks orSetv2RWLocksDividedWork orSetSync orSetSyncDividedWork orSetv2SpinLock
 
-benchOrSets: benchOrSet benchOrSetSpinLock benchOrSetV2 benchOrSetv2RWLocks benchOrSetv2RWLocksDividedWork benchOrSetSync benchOrSetSyncDividedWork  
+benchOrSets: benchOrSet benchOrSetSpinLock benchOrSetV2 benchOrSetv2RWLocks benchOrSetv2RWLocksDividedWork benchOrSetSync benchOrSetSyncDividedWork benchOrSetV2SpinLock 
 
 cleanOrSets:
-	rm orSet orSetSpinLock orSetv2 orSetv2RWLocks orSetv2RWLocksDividedWork orSetSync orSetSyncDividedWork
+	rm orSet orSetSpinLock orSetv2 orSetv2RWLocks orSetv2RWLocksDividedWork orSetSync orSetSyncDividedWork orSetv2SpinLock
 
 #QUEUES#########################################################
 

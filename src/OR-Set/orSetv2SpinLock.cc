@@ -33,7 +33,7 @@ private:
   boost::thread_specific_ptr< list< pair< node<T>*, int> > > localRemove;
 
   //class auxiliars
-  boost::mutex m;
+  boost::detail::spinlock m;
 
 void insert(T val, node<T> *leaf, T vid){
   if(val < leaf->val){
