@@ -41,7 +41,7 @@ The synchronization frequency is the interval of operations on which each thread
 
 The results are collected on .txt files on the folder `output`.
 
-## P-Counter
+## Benchmark examples
 
 **Synchronous Counter**
 
@@ -54,7 +54,6 @@ The results are collected on .txt files on the folder `output`.
 **Hybrid Mergeable Counter**
 
 `make benchAgreggationCounterAtomicHybrid THREADS="1 2 4 8 12 16 20 24 28 32"`
-
 
 ## Benchmark all:
 
@@ -73,7 +72,7 @@ Make sure you have gnuplot installed with cairo.
 Or:
 http://www.gnuplot.info/download.html
 
-On `plots` folder you have a config to generate each of the graphs presented on the paper.
+On `plots` folder you have a config to generate each of the graphs.
 
 ## Examples:
 
