@@ -22,9 +22,9 @@ set border 3 back linestyle 80 # Remove border on top and right.  These
 # like gnuplot's default yellow.  Make the lines thick
 # so they're easy to see in small plots in papers.
 set style line 1 lc rgb "#A00000" pt 7
-set style line 2 lc rgb "#00A000" pt 7
-set style line 3 lc rgb "#5060D0" pt 7
-set style line 4 lc rgb "#F25900" pt 7
+set style line 2 lc rgb "#00A000" pt 9
+set style line 3 lc rgb "#5060D0" pt 5
+set style line 4 lc rgb "#F25900" pt 18
 # Let gnuplot decide the color, if more than 4 lines
 set style line 5 pt 7
 set style line 6 pt 7

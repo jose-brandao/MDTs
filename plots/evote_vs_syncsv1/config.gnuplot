@@ -4,11 +4,11 @@
 set terminal pdfcairo font "Gill Sans,7" linewidth 1 rounded fontscale 0.9
 
 # Line style for axes
-set style line 80 lt rgb "#808080"
+set style line 80 lt rgb "#595959"
 
 # Line style for grid
 set style line 81 lt 0  # dashed
-set style line 81 lt rgb "#808080"  # grey
+set style line 81 lt rgb "#595959"  # grey
 #set ytics 4
 
 #set logscale x 50
@@ -41,8 +41,16 @@ set xlabel "threads"
 
 set key right top
 
-set yrange [0:*]
+set yrange [0:8000000]
 set xrange [*:36]
+
+set ylabel font ",5"
+set xlabel font ",5"
+set xtics font ",5" 
+set ytics font ",5" 
+
+set key left top
+set key font ",4"
 
 
 # Titles with spaces are not allowed

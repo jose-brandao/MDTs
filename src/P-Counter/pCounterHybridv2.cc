@@ -46,7 +46,7 @@ public:
   }
 
   void merge(){ //mergeToGlobal
-    gcount.fetch_add(*lcount, std::memory_order_relaxed); //merging thread local state with global state
+    gcount.fetch_add(*lcount, std::memory_order_relaxed); //merging the thread-local state with global state
     *lgcount = gcount;  // updating the snapshot
     *lcount = 0; //resetting thread local state
   }

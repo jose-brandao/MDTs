@@ -1,5 +1,20 @@
 # Mergeable Data Types(MDTs) for shared memory
-MDTs for shared memory c++ implementation
+
+In this repo you can find several implementations and benchmarks of Mergeable Data Types(MDTs) written in C++.
+
+MDTs are convergent data structures, used to relax synchronization in shared memory environments, analogously to CRDTs in distributed systems. 
+
+The central idea is that each thread can update its local private copy of an object and later merge its changes to a shared global object.  Each thread’s execution will behave as a fork of the main branch (global shared object). At the moment that execution starts, each thread has a local copy of the global shared object, and when the merge operation performs, this new branch joins its updates into the main branch.
+
+Here we present a portfolio with a wide range of data types including:
+\begin{list_type}  
+\item P-Counter/PN-Counter.
+\item G-Bag.
+\item OR-Set.
+\item Queue.
+\item E-Vote(Eletronic Vote) - a direct application.
+\end{list_type}
+
 
 # Setup:
 
