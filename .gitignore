@@ -60,6 +60,6 @@ syncCounter
 syncGBag
 syncQueue
 
-
+.idea/
 *.txt
 .vscode/
